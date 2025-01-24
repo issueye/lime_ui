@@ -10,7 +10,7 @@
       :collapse-transition="false"
       text-color="#fff"
       active-text-color="#fff"
-      background-color="#3366FF"
+      background-color="#83C0C1"
     >
       <!-- 菜单 -->
       <!-- 遍历数组，:key 属性用于唯一标识数组中的每个元素，帮助 Vue 更高效地追踪和更新 DOM。 -->
@@ -40,7 +40,7 @@
           </el-menu-item>
         </el-sub-menu>
 
-        <el-menu-item v-else :index="item.frontpath">
+        <el-menu-item v-else-if="item.show" :index="item.frontpath">
           <el-icon>
             <component :is="item.icon"></component>
           </el-icon>

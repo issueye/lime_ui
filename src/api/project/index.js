@@ -25,3 +25,9 @@ export function apiUpdateData(data) {
 export function apiDeleteById(id) {
   return axios.delete(`/api/v1/project/${id}`);
 }
+
+// apiSyncData
+// 同步数据
+export function apiSyncData(id) {
+  return axios.post(`/api/v1/project/sync/${id}`);
+}

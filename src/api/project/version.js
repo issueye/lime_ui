@@ -25,3 +25,8 @@ export function apiUpdateData(data) {
 export function apiDeleteById(id) {
     return axios.delete(`/api/v1/project/version/${id}`);
 }
+
+
+export function compileVersion(id) {
+    return axios.post(`/api/v1/project/compile/${id}`);
+}

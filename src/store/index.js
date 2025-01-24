@@ -43,9 +43,29 @@ export const useUserStore = defineStore(
                 visible: false,
                 parent_code: "",
                 is_have: true,
-                child: null
+                child: null,
+                show: true,
             }
-            menus.value = [home, ...menusList]   // 用于将传入的 menusList 参数赋值给 menus 状态。
+
+            let compile = {
+                code: '0002',
+                name: "编译",
+                desc: "",
+                frontpath: "/project/compile",
+                order: 0,
+                icon: "CompileFilled",
+                visible: false,
+                parent_code: "",
+                is_have: true,
+                child: null,
+                show: false
+            }
+
+            let mList = menusList.map(item => {
+                item.show = true
+                return item
+            })
+            menus.value = [home, compile, ...mList]   // 用于将传入的 menusList 参数赋值给 menus 状态。
             asideMenus.value = menus.value
         }
 

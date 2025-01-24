@@ -4,7 +4,7 @@
     :style="{ height: global.CARAMBOLA_HEADER_HEIGHT }"
   >
     <span
-      class="w-[200px] flex justify-center items-center text-xl font-thin text-white"
+      class="w-[250px] flex justify-center items-center text-xl font-thin text-white"
     >
       <!-- <el-icon class="mr-1">
         <component :is="global.APP_ICON"></component>
