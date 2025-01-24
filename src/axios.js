@@ -6,7 +6,7 @@ import { useUserStore } from '~/store' // 导入 Pinia store
 
 const service = axios.create({
     baseURL: import.meta.env.VITE_B_URL, // 指向后端服务器
-    timeout: 8000,
+    timeout: 60 * 1000,
 });
 
 // 添加请求拦截器

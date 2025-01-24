@@ -211,9 +211,9 @@ const connWS = () => {
   // 3.websocket集成的插件,这里要注意,网上写了很多websocket相关代码.xterm4版本没必要.
   const attachAddon = new AttachAddon(ws.value);
   const fitAddon = new FitAddon() // 全屏插件
-  term.loadAddon(attachAddon);
-  term.loadAddon(fitAddon);
-  term.open(this.$refs.terminal);
+  term.value.loadAddon(attachAddon);
+  term.value.loadAddon(fitAddon);
+  term.value.open(terminal.value);
   fitAddon.fit();
   term.focus();
   this.term = term;
