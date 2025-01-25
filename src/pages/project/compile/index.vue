@@ -98,7 +98,7 @@ import "xterm/css/xterm.css";
 import ScriptDialog from './dialog.vue';
 import { useProjectStore } from '~/store/project';
 import { storeToRefs } from 'pinia';
-import { apiSaveCompileConfig, apiGetByProjectId } from '~/api/project';
+import { apiSaveCompileConfig, apiGetByProjectId, apiCompile } from '~/api/project';
 import { toast } from "~/composables/util";
 
 const projectStore = useProjectStore();
@@ -258,17 +258,11 @@ const initTerm = () => {
 }
 
 const connWS = () => {
-  let url = `ws://${location.host}/ws`;
+  let url = `ws://${location.host}/api/v1/ws`;
   ws.value = new WebSocket(url);    // 带 token 发起连接
   // 3.websocket集成的插件,这里要注意,网上写了很多websocket相关代码.xterm4版本没必要.
   const attachAddon = new AttachAddon(ws.value);
-  const fitAddon = new FitAddon() // 全屏插件
   term.value.loadAddon(attachAddon);
-  term.value.loadAddon(fitAddon);
-  term.value.open(terminal.value);
-  fitAddon.fit();
-  term.focus();
-  this.term = term;
 }
 
 /**
@@ -290,7 +284,19 @@ const handleSubmit = async () => {
  * 编译
  */
 const handleCompile = async () => {
+  console.log('compile -> ',typeof compile.version_id, !compile.version_id, compile.version_id === 2, compile.version_id === 0);
+  if (compile.version_id === 0) {
+    toast('请选择版本');
+    return;
+  }
 
+  try {
+    connWS();
+
+    await apiCompile(compile.project_id, compile.version_id);
+  } catch (error) {
+    console.log('error', error);
+  }
 }
 
 </script>

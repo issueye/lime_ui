@@ -40,8 +40,8 @@ export function apiSaveCompileConfig(data) {
 
 // apiCompile
 // 编译
-export function apiCompile(id) {
-  return axios.post(`/api/v1/project/compile/run/${id}`);
+export function apiCompile(id, version_id) {
+  return axios.get(`/api/v1/project/compile/run/${id}?version_id=${version_id}`);
 }
 
 // apiGetByProjectId

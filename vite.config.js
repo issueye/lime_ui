@@ -19,16 +19,21 @@ export default defineConfig({
     port: 3000, // 设置为 3002
     host: '0.0.0.0',
     proxy: {
-      '/mulberry/api': {
+      '/lime/api': {
         target: 'http://0.0.0.0:6679',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/mulberry\/api/, '/api')
+        rewrite: (path) => path.replace(/^\/lime\/api/, '/api')
       },
       '/static': {
         target: 'http://0.0.0.0:6679',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/static/, '/static')
-      }
+      },
+      '/lime/api/v1/ws': {
+        target: 'ws://0.0.0.0:6679',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/lime\/api\/v1\/ws/, '/api/v1/ws')
+      },
     }
   },
 
