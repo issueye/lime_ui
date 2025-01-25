@@ -1,7 +1,12 @@
 <template>
-  <base-page title="项目编译" desc="项目编译" padding="0px">
+  <base-page :title="title" desc="项目编译" padding="0px">
     <template #actions>
-      <el-button type="primary" @click="handleBackClick">返回</el-button>
+      <div>
+        <el-select v-model="compile.version_id" placeholder="请选择版本" class="w-[300px] mr-2">
+          <el-option v-for="item in versionList" :key="item.id" :label="item.version" :value="item.id"></el-option>
+        </el-select>
+        <el-button type="primary" @click="handleBackClick">返回</el-button>
+      </div>
     </template>
     <template #content>
       <div class="flex" style="height: calc(100% - 40px);">
@@ -9,9 +14,11 @@
           <el-form :model="form" label-width="100px" ref="formRef">
             <el-form-item label="编译前脚本">
               <div class="w-full flex gap-2 items-center">
-                <el-tag closable v-for="(item, index) in form.scripts" :key="index" @close="handleTagClose(item)" effect="plain" @dblclick="handleDblClick(item)">{{ item.name }}</el-tag>
+                <el-tag closable v-for="(item, index) in form.scripts" :key="index" @close="handleTagClose(item)"
+                  effect="plain" @dblclick="handleDblClick(item)">{{ item.name }}</el-tag>
                 <el-input v-if="inputVisible" @keyup.enter="addScript" v-model="inputValue" class="w-32"></el-input>
-                <el-button v-else type="primary" plain @click="inputVisible = true; inputValue = ''" icon="Plus" size="small"></el-button>
+                <el-button v-else type="primary" plain @click="inputVisible = true; inputValue = ''" icon="Plus"
+                  size="small"></el-button>
               </div>
             </el-form-item>
 
@@ -22,13 +29,13 @@
             <el-form-item label="目标平台">
               <div class="flex w-full gap-2">
                 <el-select v-model="form.goos" placeholder="选择操作系统">
-                  <el-option label="Linux" value="linux" />
-                  <el-option label="Windows" value="windows" />
-                  <el-option label="macOS" value="darwin" />
+                  <el-option label="Windows" :value="0" />
+                  <el-option label="Linux" :value="1" />
+                  <el-option label="macOS" :value="2" />
                 </el-select>
                 <el-select v-model="form.goarch" placeholder="选择架构">
-                  <el-option label="amd64" value="amd64" />
-                  <el-option label="arm64" value="arm64" />
+                  <el-option label="amd64" :value="0" />
+                  <el-option label="arm64" :value="1" />
                 </el-select>
               </div>
             </el-form-item>
@@ -48,7 +55,7 @@
             <el-form-item label="注入变量">
               <div class="w-full">
                 <div class="flex flex-col gap-2 w-full">
-                  <div v-for="(item, index) in form.envVars" :key="index" class="w-full flex justify-between gap-2">
+                  <div v-for="(item, index) in form.env_vars" :key="index" class="w-full flex justify-between gap-2">
                     <div class="w-4/5 gap-2 flex">
                       <el-input v-model="item.key" placeholder="变量名" class="w-2/5" />
                       <el-input v-model="item.value" placeholder="变量值" class="w-3/5" />
@@ -56,8 +63,8 @@
                     <el-button type="danger" @click="removeEnvVar(index)" icon="remove"></el-button>
                   </div>
                 </div>
-                <el-button type="primary" plain @click="addEnvVar"
-                  :class="form.envVars.length > 0 ? 'mt-2' : ''" icon="Plus" size="small"></el-button>
+                <el-button type="primary" plain @click="addEnvVar" :class="form.env_vars.length > 0 ? 'mt-2' : ''"
+                  icon="Plus" size="small"></el-button>
               </div>
             </el-form-item>
 
@@ -66,7 +73,8 @@
             </el-form-item>
 
             <el-form-item>
-              <el-button type="primary" @click="handleSubmit">编译</el-button>
+              <el-button type="primary" @click="handleSubmit">保存编译信息</el-button>
+              <el-button type="warning" icon="Promotion" @click="handleCompile">编译</el-button>
             </el-form-item>
           </el-form>
         </div>
@@ -88,9 +96,23 @@ import { FitAddon } from "xterm-addon-fit";
 import { AttachAddon } from 'xterm-addon-attach'
 import "xterm/css/xterm.css";
 import ScriptDialog from './dialog.vue';
+import { useProjectStore } from '~/store/project';
+import { storeToRefs } from 'pinia';
+import { apiSaveCompileConfig, apiGetByProjectId } from '~/api/project';
+import { toast } from "~/composables/util";
+
+const projectStore = useProjectStore();
+const { versionList } = storeToRefs(projectStore);
+
+const compile = reactive({
+  project_id: 0,
+  version_id: 0,
+})
 
 const inputVisible = ref(false)
 const inputValue = ref('')
+
+const title = ref('项目编译')
 
 const scriptDialog = reactive({
   visible: false,
@@ -126,26 +148,28 @@ const router = useRouter();
 const terminal = ref(null);
 let term = ref(null);
 const ws = ref(null);
+const project = ref(null);
 
 const fitAddon = new FitAddon();
 
 const form = reactive({
+  project_id: 0,
   output: '',
-  goos: 'linux',
-  goarch: 'amd64',
+  goos: 0,
+  goarch: 0,
   flags: [],
   ldflags: '-w -s',
   tags: '',
   scripts: [],
-  envVars: [] // 初始化为空数组
+  env_vars: [] // 初始化为空数组
 })
 
 const removeEnvVar = (index) => {
-  form.envVars.splice(index, 1)
+  form.env_vars.splice(index, 1)
 }
 
 const addEnvVar = () => {
-  form.envVars.push({ key: '', value: '' })
+  form.env_vars.push({ key: '', value: '' })
 }
 
 const addScript = () => {
@@ -174,7 +198,35 @@ const handleBackClick = () => {
   router.back()
 }
 
+const getConfig = async (id) => {
+  try {
+    const res = await apiGetByProjectId(id);
+    form.project_id = res.project_id;
+    form.output = res.output;
+    form.goos = res.goos;
+    form.goarch = res.goarch;
+    form.flags = res.flags;
+    form.ldflags = res.ldflags;
+    form.tags = res.tags;
+    form.scripts = res.scripts;
+    form.env_vars = res.env_vars;
+  } catch (error) {
+    console.log('error', error);
+  }
+
+}
+
 onMounted(() => {
+  // 获取路由参数
+  const { id, version_id } = router.currentRoute.value.query;
+  project.value = projectStore.getProjectById(id);
+  title.value = `项目编译 - [${project.value.name}]`
+
+  compile.project_id = id;
+  compile.version_id = version_id == 0 ? null : version_id;
+  getConfig(id);
+
+  // 初始化终端
   initTerm();
 })
 
@@ -219,9 +271,26 @@ const connWS = () => {
   this.term = term;
 }
 
+/**
+ * 提交
+ */
 const handleSubmit = async () => {
+  // connWS();
+  form.project_id = parseInt(compile.project_id);
   console.log('form', form);
-  connWS();
+  try {
+    await apiSaveCompileConfig(form);
+    toast('保存成功');
+  } catch (error) {
+    console.log('error', error);
+  }
+}
+
+/**
+ * 编译
+ */
+const handleCompile = async () => {
+
 }
 
 </script>

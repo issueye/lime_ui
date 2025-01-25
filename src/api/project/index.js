@@ -31,3 +31,21 @@ export function apiDeleteById(id) {
 export function apiSyncData(id) {
   return axios.post(`/api/v1/project/sync/${id}`);
 }
+
+// apiSaveCompileConfig
+// 保存编译配置
+export function apiSaveCompileConfig(data) {
+  return axios.post(`/api/v1/project/compile/config`, data);
+}
+
+// apiCompile
+// 编译
+export function apiCompile(id) {
+  return axios.post(`/api/v1/project/compile/run/${id}`);
+}
+
+// apiGetByProjectId
+// 根据项目id获取项目
+export function apiGetByProjectId(id) {
+  return axios.get(`/api/v1/project/compile/config/${id}`);
+}

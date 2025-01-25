@@ -44,21 +44,27 @@
     <Dialog v-model:visible="dialog.visible" v-model:form-data="formData" :operation-type="dialog.operationType"
         @close="handleDialogClose" />
     
-    <CompileDialog v-model:visible="dialog.compileDialogVisible" />
 </template>
 <script setup>
 import { ref, reactive, onMounted } from "vue";
 import Dialog from "./dialog.vue";
-import CompileDialog from './CompileDialog.vue';
 import { toast } from "~/composables/util";
 import { useRouter } from 'vue-router';
 
-import { apiGetList, apiDeleteById } from "~/api/project/version";
+import { useProjectStore } from '~/store/project';
+import { storeToRefs } from "pinia";
+
+const router = useRouter();
+const projectStore = useProjectStore();
+
+const {
+    versionList:tableData,
+    versionPageConfig:pageConfig,
+    versionQryParams:queryParams,
+
+} = storeToRefs(projectStore);
 
 const queryFormRef = ref(null);
-const queryParams = reactive({
-    keywords: "",
-});
 
 const dialog = reactive({
     visible: false,
@@ -67,13 +73,6 @@ const dialog = reactive({
 });
 
 const loading = ref(false);
-
-const router = useRouter();
-
-/**
- * 获取表格数据
- */
-const tableData = ref([]);
 
 /**
  * 表格信息
@@ -104,20 +103,11 @@ const columns = [
 
 const formData = reactive({
     id: 0, // ID
-    name: "", // 名称
-    repo_url: "", // 仓库地址
-    repo_user: "", // 仓库用户
-    repo_password: "", // 用户密码
+    version: "", // 版本
+    branch_name: "", // 分支名称
+    hash: "", // HASH
+    project_id: 0, // 项目ID
     description: "", // 备注
-});
-
-/**
- * 分页查询
- */
-const pageConfig = reactive({
-    pageSize: 10,
-    currentPage: 1,
-    total: 0,
 });
 
 onMounted(() => {
@@ -136,7 +126,7 @@ const handleQuery = () => {
  */
 const handleResetQuery = () => {
     queryFormRef.value.resetFields();
-    pageConfig.currentPage = 1;
+    pageConfig.value.currentPage = 1;
     handleQuery();
 };
 
@@ -165,21 +155,23 @@ const handleCompileClick = (value) => {
 };
 
 const setValue = (value) => {
+    console.log('value', value);
+    
     formData.id = value.id;
-    formData.name = value.name;
-    formData.repo_url = value.repo_url;
-    formData.repo_user = value.repo_user;
-    formData.repo_password = value.repo_password;
-    formData.remark = value.remark;
+    formData.version = value.version;
+    formData.branch_name = value.branch_name;
+    formData.hash = value.hash;
+    formData.project_id = value.project_id;
+    formData.description = value.description;
 };
 
 const resetValue = () => {
     formData.id = 0;
-    formData.name = "";
-    formData.repo_url = "";
-    formData.repo_user = "";
-    formData.repo_password = "";
-    formData.remark = "";
+    formData.version = "";
+    formData.branch_name = "";
+    formData.hash = "";
+    formData.project_id = "";
+    formData.description = "";
 };
 
 /**
@@ -188,10 +180,8 @@ const resetValue = () => {
  */
 const handleDeleteClick = async (value) => {
     loading.value = true;
-    await apiDeleteById(value.id);
+    await projectStore.deleteVersionById(value.id);
     loading.value = false;
-    toast("删除成功");
-    getData();
 };
 
 const handleCommand = ({ data, type }) => {
@@ -208,18 +198,14 @@ const handleDialogClose = () => {
  * 查询数据
  */
 const getData = async () => {
-    let params = {
-        pageNum: pageConfig.currentPage,
-        pageSize: pageConfig.pageSize,
-        condition: queryParams,
-    };
-
     loading.value = true;
-    let res = await apiGetList(params);
-    loading.value = false;
-
-    tableData.value = res.list;
-    pageConfig.total = res.total;
+    try {
+        await projectStore.getVersionList();
+    } catch (error) {
+        console.log(error);
+    } finally {
+        loading.value = false;
+    }
 };
 
 </script>

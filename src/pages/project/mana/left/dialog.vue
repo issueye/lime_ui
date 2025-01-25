@@ -93,8 +93,6 @@ const dialog = reactive({
   loading: false,
 });
 
-const templateTypeOptions = ref([]);
-
 /**
  * 表单验证规则
  */
@@ -115,8 +113,6 @@ const handleClose = () => {
 };
 
 const handleOpen = () => {
-  getTemplateTypeOptions();
-
   switch (operationType.value) {
     case 0:
       dialog.title = "新增项目信息";
@@ -126,11 +122,6 @@ const handleOpen = () => {
       dialog.title = "新增项目信息";
       break;
   }
-};
-
-const getTemplateTypeOptions = async () => {
-  let res = await apiGetDictDetails("10004"); // 假设10004是模板类型字典
-  templateTypeOptions.value = res.list;
 };
 
 /**

@@ -32,9 +32,14 @@
 </template>
 
 <script setup>
-import { apiAddData, apiUpdateData } from "~/api/project/version";
+import { storeToRefs } from "pinia";
 import { reactive, ref, toRefs, computed } from "vue";
 import { apiGetList as apiGetBranchList } from "~/api/project/branch";
+
+import { useProjectStore } from '~/store/project';
+
+const projectStore = useProjectStore();
+const { branchList } = storeToRefs(projectStore);
 
 const props = defineProps({
   // 操作类型 0:新增 1:编辑
@@ -53,10 +58,10 @@ const props = defineProps({
     default: () => {
       return {
         id: 0, // ID
-        name: "", // 名称
-        repo_url: "", // 仓库地址
-        repo_user: "", // 仓库用户
-        repo_password: "", // 用户密码
+        version: "", // 版本
+        branch_name: "", // 分支名称
+        hash: "", // HASH
+        project_id: 0, // 项目ID
         description: "", // 备注
       };
     },
@@ -73,8 +78,6 @@ const dialog = reactive({
   loading: false,
 });
 
-
-const branchList = ref([]);
 
 /**
  * 表单验证规则
@@ -95,13 +98,8 @@ const handleClose = () => {
   emits("close");
 };
 
-const getBranchList = async () => {
-    let res = await apiGetBranchList();
-    branchList.value = res.list;
-};
-
 const handleOpen = () => {
-  getBranchList();
+  projectStore.getBranchList();
 
   switch (operationType.value) {
     case 0:
@@ -137,23 +135,17 @@ const handleSubmitClick = () => {
  * 新增数据
  */
 const addData = async () => {
-  try {
-    dialog.loading = true;
-    await apiAddData(formData.value);
-    dialog.loading = false;
-    toast("新增代码生成配置成功");
-  } catch (error) { }
+  dialog.loading = true;
+  await projectStore.addVersionData(formData.value);
+  dialog.loading = false;
 };
 
 /**
  * 修改数据
  */
 const editData = async () => {
-  try {
-    dialog.loading = true;
-    await apiUpdateData(formData.value);
-    dialog.loading = false;
-    toast("修改代码生成配置成功");
-  } catch (error) { }
+  dialog.loading = true;
+  await projectStore.updateVersionData(formData.value);
+  dialog.loading = false;
 };
 </script>

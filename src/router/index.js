@@ -15,7 +15,6 @@ import DictMana from '~/pages/system/dict_mana/index.vue';
 import Setting from '~/pages/system/setting/index.vue';
 
 import ProjectMana from '~/pages/project/mana/index.vue';
-import VersionMana from '~/pages/project/version/index.vue';
 import Compile from '~/pages/project/compile/index.vue';
 
 
@@ -33,7 +32,6 @@ const asyncRoutes = [
 
     // 代理管理
     { path: "/project/index", name: "project_mana", component: ProjectMana, meta: { title: "项目管理" } },
-    { path: "/project/version", name: "project_version", component: VersionMana, meta: { title: "版本管理" } },
     { path: "/project/compile", name: "project_compile", component: Compile, meta: { title: "项目编译" } },
 
     // 系统管理

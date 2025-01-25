@@ -19,7 +19,7 @@
 
             <div class="grow">
                 <d-table :columns="columns" :table-data="tableData" :page-config="pageConfig" usePagination
-                    highlight-current-row stripe :loading="loading" empty-text="暂无数据">
+                    highlight-current-row stripe :loading="loading" empty-text="暂无数据" @cell-click="handleRowClick">
                     <template #operation="{ scope }">
                         <el-button type="primary" link @click="handleEditClick(scope.row)">编辑</el-button>
                         <el-divider direction="vertical" />
@@ -31,6 +31,9 @@
                             </span>
                             <template #dropdown>
                                 <el-dropdown-menu>
+                                    <el-dropdown-item :command="{ data: scope.row, type: 'compile' }">
+                                        编译
+                                    </el-dropdown-item>
                                     <el-dropdown-item :command="{ data: scope.row, type: 'del' }"
                                         class="text-[--el-color-danger]">
                                         删除
@@ -51,12 +54,21 @@ import { ref, reactive, onMounted } from "vue";
 import Dialog from "./dialog.vue";
 import { toast } from "~/composables/util";
 
-import { apiGetList, apiDeleteById, apiSyncData } from "~/api/project";
+import { apiDeleteById, apiSyncData } from "~/api/project";
+import { useProjectStore } from '~/store/project';
+import { storeToRefs } from "pinia";
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const projectStore = useProjectStore();
+
+const { 
+    projectPageConfig:pageConfig, 
+    projectQryParams:queryParams,
+    projectList: tableData,
+} = storeToRefs(projectStore);
 
 const queryFormRef = ref(null);
-const queryParams = reactive({
-    keywords: "",
-});
 
 const dialog = reactive({
     visible: false,
@@ -64,12 +76,6 @@ const dialog = reactive({
 });
 
 const loading = ref(false);
-
-/**
- * 获取表格数据
- */
-const tableData = ref([]);
-
 
 /**
  * 表格信息
@@ -117,15 +123,6 @@ const formData = reactive({
     description: "", // 备注
 });
 
-/**
- * 分页查询
- */
-const pageConfig = reactive({
-    pageSize: 10,
-    currentPage: 1,
-    total: 0,
-});
-
 onMounted(() => {
     getData();
 });
@@ -142,7 +139,7 @@ const handleQuery = () => {
  */
 const handleResetQuery = () => {
     queryFormRef.value.resetFields();
-    pageConfig.currentPage = 1;
+    pageConfig.value.currentPage = 1;
     handleQuery();
 };
 
@@ -164,6 +161,11 @@ const handleEditClick = (value) => {
     setValue(value);
     dialog.visible = true;
 };
+
+const handleRowClick = (row) => {
+    console.log('row', row);
+    projectStore.setProject(row);
+}
 
 const setValue = (value) => {
     formData.id = value.id;
@@ -203,13 +205,19 @@ const handleSyncClick = async (value) => {
     getData();
 };
 
+const handleJumpClick = (value) => {
+    router.push({ path: '/project/compile', query: { version_id: 0, id: value.id } });
+}
+
 const handleCommand = ({ data, type }) => {
+    // 删除
     if (type === "del") {
         handleDeleteClick(data);
     }
 
-    if (type === "sync") {
-        handleSyncClick(data);
+    // 编译
+    if (type === "compile") {
+        handleJumpClick(data);
     }
 };
 
@@ -221,17 +229,13 @@ const handleDialogClose = () => {
  * 查询数据
  */
 const getData = async () => {
-    let params = {
-        pageNum: pageConfig.currentPage,
-        pageSize: pageConfig.pageSize,
-        condition: queryParams,
-    };
-
     loading.value = true;
-    let res = await apiGetList(params);
-    loading.value = false;
-
-    tableData.value = res.list;
-    pageConfig.total = res.total;
+    try {
+        await projectStore.getProjectList();    
+    } catch (error) {
+        console.log(error);
+    } finally {
+        loading.value = false;
+    }
 };
 </script>
