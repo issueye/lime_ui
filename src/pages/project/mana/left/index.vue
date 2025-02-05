@@ -118,6 +118,7 @@ const formData = reactive({
     id: 0, // ID
     name: "", // 名称
     repo_url: "", // 仓库地址
+    proxy_url: "", // 代理地址
     repo_user: "", // 仓库用户
     repo_password: "", // 用户密码
     description: "", // 备注

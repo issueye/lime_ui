@@ -194,6 +194,7 @@ export const useProjectStore = defineStore(
             versionPageConfig,
             projectQryParams,
             versionQryParams,
+            branchList,
 
             getProjectList,
             getProjectById,

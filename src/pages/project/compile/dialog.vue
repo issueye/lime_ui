@@ -52,6 +52,7 @@ const cmOptions = {
 onMounted(() => {
   setTimeout(() => {
     cmRef.value?.refresh();
+    cmRef.value?.setSize('100%', auto);
   }, 1000);
 })
 
@@ -80,3 +81,7 @@ const handleSubmitClick = () => {
 };
 
 </script>
+
+<style scoped>
+
+</style>

@@ -22,11 +22,15 @@
         <el-input v-model="formData.repo_url" placeholder="请输入仓库地址" />
       </el-form-item>
 
-      <el-form-item label="用户名称" prop="repo_user">
+      <el-form-item label="代理地址">
+        <el-input v-model="formData.proxy_url" placeholder="请输入代理地址" />
+      </el-form-item>
+
+      <el-form-item label="用户名称">
         <el-input v-model="formData.repo_user" placeholder="请输入用户名称" />
       </el-form-item>
 
-      <el-form-item label="用户密码" prop="repo_password">
+      <el-form-item label="用户密码">
         <el-input
           v-model="formData.repo_password"
           placeholder="请输入用户密码"
@@ -75,6 +79,7 @@ const props = defineProps({
         id: 0, // ID
         name: "", // 名称
         repo_url: "", // 仓库地址
+        proxy_url:"", // 代理地址
         repo_user: "", // 仓库用户
         repo_password: "", // 用户密码
         description: "", // 备注

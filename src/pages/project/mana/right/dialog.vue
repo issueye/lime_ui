@@ -34,12 +34,13 @@
 <script setup>
 import { storeToRefs } from "pinia";
 import { reactive, ref, toRefs, computed } from "vue";
-import { apiGetList as apiGetBranchList } from "~/api/project/branch";
 
 import { useProjectStore } from '~/store/project';
 
 const projectStore = useProjectStore();
 const { branchList } = storeToRefs(projectStore);
+console.log('branchList', branchList);
+
 
 const props = defineProps({
   // 操作类型 0:新增 1:编辑

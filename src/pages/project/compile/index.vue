@@ -10,7 +10,7 @@
     </template>
     <template #content>
       <div class="flex" style="height: calc(100% - 40px);">
-        <div class="p-5 w-2/5 h-full" style="border-right: 1px solid #d9d9d9;">
+        <div class="p-5 w-3/5 h-full" style="border-right: 1px solid #d9d9d9;">
           <el-form :model="form" label-width="100px" ref="formRef">
             <el-form-item label="编译前脚本">
               <div class="w-full flex gap-2 items-center">
@@ -23,7 +23,9 @@
             </el-form-item>
 
             <el-form-item label="输出文件" prop="output">
-              <el-input v-model="form.output" placeholder="可执行文件名（不含扩展）" />
+              <!-- <el-input v-model="form.output" type="textarea" placeholder="可执行文件名（不含扩展）" :rows="5" /> -->
+              <Codemirror v-model:value="form.output" ref="cmRef" :options="cmOptions" border height="200"
+                style="line-height: 1.5;"></Codemirror>
             </el-form-item>
 
             <el-form-item label="目标平台">
@@ -42,14 +44,15 @@
 
             <el-form-item label="编译参数">
               <el-checkbox-group v-model="form.flags">
-                <el-checkbox value="-v">显示详细输出</el-checkbox>
-                <el-checkbox value="-race">启用竞态检测</el-checkbox>
-                <el-checkbox value="-trimpath">清除路径信息</el-checkbox>
+                <el-checkbox value="-v">显示详细输出(-v)</el-checkbox>
+                <el-checkbox value="-trimpath">清除路径信息(-trimpath)</el-checkbox>
+                <!-- <el-checkbox value="-ldflags '-w -s'">添加链接器标志(-w -s)</el-checkbox> -->
               </el-checkbox-group>
             </el-form-item>
 
-            <el-form-item label="版本信息">
-              <el-input v-model="form.ldflags" placeholder="-ldflags '-w -s'" />
+            <!-- 连接器标志 -->
+            <el-form-item label="连接器标志">
+              <el-input v-model="form.ldflags" placeholder="例如：-w -s" />
             </el-form-item>
 
             <el-form-item label="注入变量">
@@ -78,7 +81,7 @@
             </el-form-item>
           </el-form>
         </div>
-        <div class="p-5 w-3/5 h-full">
+        <div class="p-5 w-2/5 h-full">
           <div id="terminal" ref="terminal" class="h-full"></div>
         </div>
       </div>
@@ -89,7 +92,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, toRefs, onMounted } from 'vue'
+import { ref, reactive, toRefs, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router';
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
@@ -100,6 +103,8 @@ import { useProjectStore } from '~/store/project';
 import { storeToRefs } from 'pinia';
 import { apiSaveCompileConfig, apiGetByProjectId, apiCompile } from '~/api/project';
 import { toast } from "~/composables/util";
+import "codemirror/mode/javascript/javascript.js";
+import Codemirror from "codemirror-editor-vue3";
 
 const projectStore = useProjectStore();
 const { versionList } = storeToRefs(projectStore);
@@ -108,6 +113,11 @@ const compile = reactive({
   project_id: 0,
   version_id: 0,
 })
+
+const cmRef = ref();
+const cmOptions = {
+  mode: "text/javascript",
+};
 
 const inputVisible = ref(false)
 const inputValue = ref('')
@@ -143,6 +153,21 @@ function runtimeCompileBefore(project, version) {
 } 
 `)
 
+const outputScript = ref(`/**
+ * 获取输出文件名称
+ * @param compile {object} 编译信息
+ * @param project {object} 项目信息
+ * @param version {object} 版本信息
+ * @return {string} 文件名称
+ */
+function getOutfileName(compile, project, version) {
+	let name = project.Name + "." + version.Version
+    // 判断编译平台
+    if (compile.Goos.toString() == "windows") { name += '.exe' }
+    return name;
+}
+`)
+
 const formRef = ref(null)
 const router = useRouter();
 const terminal = ref(null);
@@ -154,7 +179,7 @@ const fitAddon = new FitAddon();
 
 const form = reactive({
   project_id: 0,
-  output: '',
+  output: outputScript.value,
   goos: 0,
   goarch: 0,
   flags: [],
@@ -202,14 +227,16 @@ const getConfig = async (id) => {
   try {
     const res = await apiGetByProjectId(id);
     form.project_id = res.project_id;
-    form.output = res.output;
+
     form.goos = res.goos;
     form.goarch = res.goarch;
-    form.flags = res.flags;
-    form.ldflags = res.ldflags;
     form.tags = res.tags;
-    form.scripts = res.scripts;
-    form.env_vars = res.env_vars;
+
+    form.output = res.output === "" ? outputScript.value : res.output;
+    form.scripts = res.scripts ?? [];
+    form.env_vars = res.env_vars ?? [];
+    form.flags = res.flags ?? [];
+    form.ldflags = res.ldflags ?? '-w -s';
   } catch (error) {
     console.log('error', error);
   }
@@ -228,6 +255,14 @@ onMounted(() => {
 
   // 初始化终端
   initTerm();
+
+  setTimeout(() => {
+    cmRef.value?.refresh();
+  }, 1000);
+})
+
+onUnmounted(() => {
+  cmRef.value?.destroy();
 })
 
 const initTerm = () => {
@@ -284,9 +319,8 @@ const handleSubmit = async () => {
  * 编译
  */
 const handleCompile = async () => {
-  console.log('compile -> ',typeof compile.version_id, !compile.version_id, compile.version_id === 2, compile.version_id === 0);
-  if (compile.version_id === 0) {
-    toast('请选择版本');
+  if (compile.version_id === 0 || !compile.version_id) {
+    toast('请选择版本', 'warning');
     return;
   }
 
