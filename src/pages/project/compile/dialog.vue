@@ -1,8 +1,20 @@
 <template>
   <!--弹窗-->
-  <el-dialog v-model="visible" :title="dialog.title" width="800px" @close="handleClose" @open="handleOpen"
-    :close-on-click-modal="false">
-    <Codemirror v-model:value="data.content" ref="cmRef" :options="cmOptions" border height="500" />
+  <el-dialog
+    v-model="visible"
+    :title="dialog.title"
+    width="800px"
+    @close="handleClose"
+    @open="handleOpen"
+    :close-on-click-modal="false"
+  >
+    <Codemirror
+      v-model:value="data.content"
+      ref="cmRef"
+      :options="cmOptions"
+      border
+      height="500"
+    />
     <template #footer>
       <div class="dialog-footer">
         <el-button type="primary" @click="handleSubmitClick">确 定</el-button>
@@ -54,24 +66,24 @@ const cmOptions = {
 onMounted(() => {
   setTimeout(() => {
     cmRef.value?.refresh();
-    cmRef.value?.setSize('100%', auto);
+    cmRef.value?.setSize("100%", auto);
   }, 1000);
-})
+});
 
 onUnmounted(() => {
   cmRef.value?.destroy();
-})
+});
 
 /**
  * 关闭弹窗
  */
 const handleClose = () => {
   emits("update:visible", false);
-  emits("close");
+  emits("close", data.value.content);
 };
 
 const handleOpen = () => {
-  console.log('handleOpen', data.value);
+  console.log("handleOpen", data.value);
   dialog.title = `编辑脚本 - [${data.value.name}]`;
   cmOptions.mode = data.value.type;
 };
@@ -81,14 +93,13 @@ const handleOpen = () => {
  */
 const handleSubmitClick = () => {
   dialog.loading = true;
+
   setTimeout(() => {
     dialog.loading = false;
     handleClose();
   }, 500);
 };
-
 </script>
 
 <style scoped>
-
 </style>
