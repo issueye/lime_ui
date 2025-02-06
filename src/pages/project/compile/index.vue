@@ -23,9 +23,7 @@
             </el-form-item>
 
             <el-form-item label="输出文件" prop="output">
-              <!-- <el-input v-model="form.output" type="textarea" placeholder="可执行文件名（不含扩展）" :rows="5" /> -->
-              <Codemirror v-model:value="form.output" ref="cmRef" :options="cmOptions" border height="200"
-                style="line-height: 1.5;"></Codemirror>
+              <el-button type="primary" plain icon="Edit" size="small" @click="handleEditOutputClick"></el-button>
             </el-form-item>
 
             <el-form-item label="目标平台">
@@ -103,8 +101,6 @@ import { useProjectStore } from '~/store/project';
 import { storeToRefs } from 'pinia';
 import { apiSaveCompileConfig, apiGetByProjectId, apiCompile } from '~/api/project';
 import { toast } from "~/composables/util";
-import "codemirror/mode/javascript/javascript.js";
-import Codemirror from "codemirror-editor-vue3";
 
 const projectStore = useProjectStore();
 const { versionList } = storeToRefs(projectStore);
@@ -113,11 +109,6 @@ const compile = reactive({
   project_id: 0,
   version_id: 0,
 })
-
-const cmRef = ref();
-const cmOptions = {
-  mode: "text/javascript",
-};
 
 const inputVisible = ref(false)
 const inputValue = ref('')
@@ -154,18 +145,16 @@ function runtimeCompileBefore(project, version) {
 `)
 
 const outputScript = ref(`/**
- * 获取输出文件名称
- * @param compile {object} 编译信息
- * @param project {object} 项目信息
- * @param version {object} 版本信息
- * @return {string} 文件名称
- */
-function getOutfileName(compile, project, version) {
-	let name = project.Name + "." + version.Version
-    // 判断编译平台
-    if (compile.Goos.toString() == "windows") { name += '.exe' }
-    return name;
-}
+# 获取输出文件名称
+# @param compile {object} 编译信息
+# @param project {object} 项目信息
+# @param version {object} 版本信息
+# @return {string} 文件名称
+
+# 平台
+platform = compile.Goos.String() == "windows" ? ".exe" : ""
+# 输出
+name = "bin/" + project.Name + "." + version.Version + platform
 `)
 
 const formRef = ref(null)
@@ -211,10 +200,16 @@ const handleTagClose = (tag) => {
 }
 
 const handleDblClick = (tag) => {
-  console.log('dblclick', tag);
   scriptDialog.data = tag;
+  scriptDialog.visible = true;
+}
 
-  console.log('scriptDialog', scriptDialog);
+const handleEditOutputClick = () => {
+  scriptDialog.data = {
+    name: '输出文件',
+    content: form.output,
+    type: "shell",
+  };
   scriptDialog.visible = true;
 }
 
@@ -255,14 +250,9 @@ onMounted(() => {
 
   // 初始化终端
   initTerm();
-
-  setTimeout(() => {
-    cmRef.value?.refresh();
-  }, 1000);
 })
 
 onUnmounted(() => {
-  cmRef.value?.destroy();
 })
 
 const initTerm = () => {
@@ -289,7 +279,7 @@ const initTerm = () => {
     fitAddon.fit();
   }, 5)
 
-  term.value.writeln('Welcome to xterm');
+  term.value.writeln('编译控制台');
 }
 
 const connWS = () => {

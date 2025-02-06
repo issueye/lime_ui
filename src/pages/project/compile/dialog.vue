@@ -16,6 +16,7 @@
 import { reactive, ref, toRefs } from "vue";
 
 import "codemirror/mode/javascript/javascript.js";
+import "codemirror/mode/shell/shell.js";
 import Codemirror from "codemirror-editor-vue3";
 import { onMounted, onUnmounted } from "vue";
 
@@ -31,6 +32,7 @@ const props = defineProps({
       return {
         name: "",
         content: "",
+        type: "text/javascript",
       };
     },
   },
@@ -46,7 +48,7 @@ const dialog = reactive({
 
 const cmRef = ref();
 const cmOptions = {
-  mode: "text/javascript",
+  mode: "text/javascript", // 语言模式
 };
 
 onMounted(() => {
@@ -71,13 +73,18 @@ const handleClose = () => {
 const handleOpen = () => {
   console.log('handleOpen', data.value);
   dialog.title = `编辑脚本 - [${data.value.name}]`;
+  cmOptions.mode = data.value.type;
 };
 
 /**
  * 提交表单按钮
  */
 const handleSubmitClick = () => {
-
+  dialog.loading = true;
+  setTimeout(() => {
+    dialog.loading = false;
+    handleClose();
+  }, 500);
 };
 
 </script>
