@@ -19,6 +19,11 @@ export default defineConfig({
     port: 3000, // 设置为 3002
     host: '0.0.0.0',
     proxy: {
+      '/lime/ws_compile': {
+        target: 'ws://0.0.0.0:6679',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/lime\/ws_compile/, '/ws_compile')
+      },
       '/lime/api': {
         target: 'http://0.0.0.0:6679',
         changeOrigin: true,
@@ -28,11 +33,6 @@ export default defineConfig({
         target: 'http://0.0.0.0:6679',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/static/, '/static')
-      },
-      '/lime/api/v1/ws': {
-        target: 'ws://0.0.0.0:6679',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/lime\/api\/v1\/ws/, '/api/v1/ws')
       },
     }
   },

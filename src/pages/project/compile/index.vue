@@ -19,7 +19,7 @@
     </template>
     <template #content>
       <div class="flex" style="height: calc(100% - 40px)">
-        <div class="p-5 w-3/5 h-full" style="border-right: 1px solid #d9d9d9">
+        <div class="p-5 w-2/5 h-full" style="border-right: 1px solid #d9d9d9">
           <el-form :model="form" label-width="100px" ref="formRef">
             <el-form-item label="编译前脚本">
               <div class="w-full flex gap-2 items-center">
@@ -114,7 +114,7 @@
                       <el-input
                         v-model="item.key"
                         placeholder="变量名"
-                        class="w-2/5"
+                        class="w-4/5"
                       />
                       <el-button
                         type="primary"
@@ -122,8 +122,12 @@
                         icon="Edit"
                         size="small"
                         @click="
-                          handleEditOutputClick({
+                          handleDblClick({
                             type: 'inject_env',
+                            value: {
+                              name: item.key,
+                              content: item.value,
+                            },
                             index: index,
                           })
                         "
@@ -208,7 +212,7 @@
             </el-form-item>
           </el-form>
         </div>
-        <div class="p-5 w-2/5 h-full">
+        <div class="p-5 w-3/5 h-full">
           <div id="terminal" ref="terminal" class="h-full"></div>
         </div>
       </div>
@@ -262,25 +266,14 @@ const scriptDialog = reactive({
   },
 });
 
-const scriptContent = ref(`
-/**
-  * 编译前运行时脚本
- * @param {string} project 项目名称
- * @param {string} version 版本号
- */
-function runtimeCompileBefore(project, version) {
+const scriptContent = ref(`# 脚本
+# @param compile {object} 编译信息
+# @param project {object} 项目信息
+# @param version {object} 版本信息
+# @return {string} 注入变量
 
-  console.log('project', project)
-  console.log('version', version)
+#   表达式...
 
-  // 返回一个一维对象
-  return {
-    data: {
-      test: '123',
-      test2: '456'
-    }
-  }
-} 
 `);
 
 const outputScript = ref(`# 获取输出文件名称
@@ -300,8 +293,6 @@ const injectScript = ref(`# 注入变量
 # @param project {object} 项目信息
 # @param version {object} 版本信息
 # @return {string} 注入变量
-
-
 
 #   表达式...
 
@@ -380,11 +371,10 @@ const handleTagClose = (data) => {
 };
 
 const handleDblClick = (tag) => {
-  console.log("tag", tag.value);
-
+  // console.log("tag", tag);
   scriptDialog.data = {
     name: tag.value.name,
-    content: tag.value.content,
+    content: tag.value.content ? tag.value.content : scriptContent.value,
     type: tag.type,
   };
   scriptDialog.visible = true;
@@ -434,7 +424,8 @@ const getConfig = async (id) => {
     form.tags = res.tags;
 
     form.output = res.output === "" ? outputScript.value : res.output;
-    form.scripts = res.scripts ?? [];
+    form.before_scripts = res.before_scripts ?? [];
+    form.after_scripts = res.after_scripts?? [];
     form.env_vars = res.env_vars ?? [];
     form.flags = res.flags ?? [];
     form.ldflags = res.ldflags ?? "-w -s";
@@ -463,11 +454,14 @@ const initTerm = () => {
   term.value = new Terminal({
     rendererType: "canvas", //渲染类型
     convertEol: true, //启用时，光标将设置为下一行的开头
-    // scrollback: 50, //终端中的回滚量
+    scrollback: 50, //终端中的回滚量
     disableStdin: true, //是否应禁用输入
     windowsMode: true, // 根据窗口换行
     cursorStyle: "underline", //光标样式
     cursorBlink: true, //光标闪烁
+    fontFamily: "Monaco, Menlo, Consolas, 'Courier New', monospace", //字体
+    lineHeight: 1.2,
+    fontSize: 12,
     theme: {
       foreground: "#ECECEC", //字体
       background: "#000000", //背景色
@@ -487,11 +481,34 @@ const initTerm = () => {
 };
 
 const connWS = () => {
-  let url = `ws://${location.host}/api/v1/ws`;
-  ws.value = new WebSocket(url); // 带 token 发起连接
-  // 3.websocket集成的插件,这里要注意,网上写了很多websocket相关代码.xterm4版本没必要.
-  const attachAddon = new AttachAddon(ws.value);
-  term.value.loadAddon(attachAddon);
+  let route_path = import.meta.env.VITE_B_URL + "/ws_compile";
+  let url = `ws://${location.host}${route_path}?project_id=${compile.project_id}&id=${compile.version_id}`;
+  console.log('url', url);
+  try {
+    if (typeof(WebSocket) === "undefined") {
+      console.log("您的浏览器不支持WebSocket");
+      return;
+    }
+
+    if (ws.value !== null) {
+      ws.value.close();
+    }
+    console.log('term.value', term.value);
+    
+    term.value.clear();
+
+    ws.value = new WebSocket(url);
+    // 3.websocket集成的插件,这里要注意,网上写了很多websocket相关代码.xterm4版本没必要.
+    // const attachAddon = new AttachAddon(ws.value);
+    // term.value.loadAddon(attachAddon);
+    ws.value.onmessage = (e) => {
+      console.log('e', e);
+      const date = new Date();
+      term.value.writeln(date.toLocaleString() + ": " + e.data);
+    }
+  } catch (error) {
+    console.log("error", error);  
+  }
 };
 
 /**
@@ -518,9 +535,9 @@ const handleCompile = async () => {
     return;
   }
 
-  try {
-    connWS();
+  connWS();
 
+  try {
     await apiCompile(compile.project_id, compile.version_id);
   } catch (error) {
     console.log("error", error);
@@ -531,15 +548,32 @@ const handleCompile = async () => {
  * 关闭弹窗
  */
 const dialogClose = (value) => {
-  switch (scriptDialog.data.dataType) {
+  console.log('value', value, scriptDialog.data, "form", form);
+  switch (scriptDialog.data.type) {
     case "output": {
       form.output = value;
       break;
     }
-    case "before_script": {
-      form.scripts.forEach((item) => {
-        if (item.title === scriptDialog.data.title) {
-          item.script = value;
+    case "before": {
+      form.before_scripts.forEach((item) => {
+        if (item.name === scriptDialog.data.name) {
+          item.content = value;
+        }
+      });
+      break;
+    }
+    case "after": {
+      form.after_scripts.forEach((item) => {
+        if (item.name === scriptDialog.data.name) {
+          item.content = value;
+        }
+      });
+      break;
+    }
+    case "inject_env": {
+      form.env_vars.forEach((item) => {
+        if (item.key === scriptDialog.data.name) {
+          item.value = value;
         }
       });
       break;

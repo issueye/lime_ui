@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, toRefs } from "vue";
+import { reactive, ref, toRefs, nextTick } from "vue";
 
 import "codemirror/mode/javascript/javascript.js";
 import "codemirror/mode/shell/shell.js";
@@ -64,10 +64,11 @@ const cmOptions = {
 };
 
 onMounted(() => {
-  setTimeout(() => {
+  // 在加载完成之后
+
+  nextTick(() => {
     cmRef.value?.refresh();
-    cmRef.value?.setSize("100%", auto);
-  }, 1000);
+  });
 });
 
 onUnmounted(() => {
@@ -86,6 +87,7 @@ const handleOpen = () => {
   console.log("handleOpen", data.value);
   dialog.title = `编辑脚本 - [${data.value.name}]`;
   cmOptions.mode = data.value.type;
+  cmRef.value?.refresh();
 };
 
 /**
