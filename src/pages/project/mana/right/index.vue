@@ -151,7 +151,7 @@ const handleEditClick = (value) => {
 
 const handleCompileClick = (value) => {
     console.log('router', router);
-    router.push({ path: '/project/compile', query: { id: value.id } });
+    router.push({ path: '/project/compile', query: { version_id: value.id, id: value.project_id } });
 };
 
 const setValue = (value) => {

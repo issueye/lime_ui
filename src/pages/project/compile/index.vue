@@ -2,126 +2,140 @@
   <base-page :title="title" desc="项目编译" padding="0px">
     <template #actions>
       <div>
-        <el-select
-          v-model="compile.version_id"
-          placeholder="请选择版本"
-          class="w-[300px] mr-2"
-        >
-          <el-option
-            v-for="item in versionList"
-            :key="item.id"
-            :label="item.version"
-            :value="item.id"
-          ></el-option>
+        <el-select v-model="compile.version_id" placeholder="请选择版本" class="w-[300px] mr-2">
+          <el-option v-for="item in versionList" :key="item.id" :label="item.version" :value="item.id"></el-option>
         </el-select>
         <el-button type="primary" @click="handleBackClick">返回</el-button>
       </div>
     </template>
     <template #content>
-      <div class="flex" style="height: calc(100% - 40px)">
-        <div class="p-5 w-2/5 h-full" style="border-right: 1px solid #d9d9d9">
-          <el-form :model="form" label-width="100px" ref="formRef">
-            <el-form-item label="编译前脚本">
-              <div class="w-full flex gap-2 items-center">
-                <el-tag
-                  closable
-                  v-for="(item, index) in form.before_scripts"
-                  :key="index"
-                  @close="
-                    handleTagClose({
-                      value: item,
-                      type: 'before',
-                      index: index,
-                    })
-                  "
-                  effect="plain"
-                  @dblclick="
-                    handleDblClick({
-                      value: item,
-                      type: 'before',
-                      index: index,
-                    })
-                  "
-                  >{{ item.name }}</el-tag
-                >
-                <el-input
-                  v-if="beforeVisible"
-                  @keyup.enter="addScript('before')"
-                  v-model="beforeInputValue"
-                  class="w-32"
-                ></el-input>
-                <el-button
-                  v-else
-                  type="primary"
-                  plain
-                  @click="
-                    beforeVisible = true;
-                    beforeInputValue = '';
-                  "
-                  icon="Plus"
-                  size="small"
-                ></el-button>
-              </div>
-            </el-form-item>
+      <div class="flex h-full">
+        <div class="w-1/2 flex flex-col border-r border-gray-200">
+          <div class="flex-1 overflow-y-auto">
+            <el-form :model="form" label-width="100px" ref="formRef" class="p-5">
+              <el-form-item label="系统环境变量">
+                <div class="w-full border border-solid border-gray-200 p-2">
+                  <div class="h-[100px] flex flex-col gap-2 w-full overflow-y-scroll">
+                    <div v-for="(item, index) in form.os_env_vars" :key="index"
+                      class="w-full flex justify-between gap-2 items-center">
+                      <div class="w-4/5 gap-2 flex items-center">
+                        <el-input v-model="item.key" placeholder="变量名" class="w-4/5" size="small" />
+                        <el-input v-model="item.value" placeholder="变量值" class="w-4/5" size="small" />
+                      </div>
+                      <el-button type="danger" @click="removeOsEnvVar(index)" icon="Delete" size="small"></el-button>
+                    </div>
+                  </div>
+                  <el-button type="primary" plain @click="addOsEnvVar" :class="form.os_env_vars.length > 0 ? 'mt-2' : ''"
+                    icon="Plus" size="small"></el-button>
+                </div>
+              </el-form-item>
+              <el-divider size="small" class="mx-1"></el-divider>
+              <el-row :gutter="20">
+                <el-col :span="12">
+                  <el-form-item label="编译前脚本">
+                    <div class="w-full flex gap-2 items-center">
+                      <el-tag size="small" closable v-for="(item, index) in form.before_scripts" :key="index" @close="
+                        handleTagClose({
+                          value: item,
+                          type: 'before',
+                          index: index,
+                        })
+                        " effect="plain" @dblclick="
+                          handleDblClick({
+                            value: item,
+                            type: 'before',
+                            index: index,
+                          })
+                          ">{{ item.name }}</el-tag>
+                      <el-input size="small" v-if="beforeVisible" @keyup.enter="addScript('before')" v-model="beforeInputValue"
+                        class="w-32"></el-input>
+                      <el-button v-else type="primary" plain @click="
+                        beforeVisible = true;
+                      beforeInputValue = '';
+                      " icon="Plus" size="small"></el-button>
+                    </div>
+                  </el-form-item>
+                </el-col>
+                
+                <el-col :span="12">
+                  <el-form-item label="编译后脚本">
+                    <div class="w-full flex gap-2 items-center">
+                      <el-tag size="small" closable v-for="(item, index) in form.after_scripts" :key="index" @close="
+                        handleTagClose({
+                          value: item,
+                          type: 'after',
+                          index: index,
+                        })
+                        " effect="plain" @dblclick="
+                          handleDblClick({
+                            value: item,
+                            type: 'after',
+                            index: index,
+                          })
+                          ">{{ item.name }}</el-tag>
+                      <el-input size="small" v-if="afterVisible" @keyup.enter="addScript('after')" v-model="afterInputValue"
+                        class="w-32"></el-input>
+                      <el-button v-else type="primary" plain @click="
+                        afterVisible = true;
+                      afterInputValue = '';
+                      " icon="Plus" size="small"></el-button>
+                    </div>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-divider size="small"></el-divider>
+              <el-row :gutter="20">
+                <el-col :span="6"><el-form-item label="输出文件" prop="output">
+                    <el-button type="primary" plain icon="Edit" size="small"
+                      @click="handleEditOutputClick({ type: 'output', index: 0 })"></el-button>
+                  </el-form-item></el-col>
 
-            <el-form-item label="输出文件" prop="output">
-              <el-button
-                type="primary"
-                plain
-                icon="Edit"
-                size="small"
-                @click="handleEditOutputClick({ type: 'output', index: 0 })"
-              ></el-button>
-            </el-form-item>
+                <el-col :span="18">
+                  <el-form-item label="目标平台">
+                    <div class="flex w-full gap-2">
+                      <el-select v-model="form.goos" placeholder="选择操作系统" size="small">
+                        <el-option label="Windows" :value="0" />
+                        <el-option label="Linux" :value="1" />
+                        <el-option label="macOS" :value="2" />
+                      </el-select>
+                      <el-select v-model="form.goarch" placeholder="选择架构" size="small">
+                        <el-option label="amd64" :value="0" />
+                        <el-option label="arm64" :value="1" />
+                      </el-select>
+                    </div>
+                  </el-form-item>
+                </el-col>
+              </el-row>
 
-            <el-form-item label="目标平台">
-              <div class="flex w-full gap-2">
-                <el-select v-model="form.goos" placeholder="选择操作系统">
-                  <el-option label="Windows" :value="0" />
-                  <el-option label="Linux" :value="1" />
-                  <el-option label="macOS" :value="2" />
-                </el-select>
-                <el-select v-model="form.goarch" placeholder="选择架构">
-                  <el-option label="amd64" :value="0" />
-                  <el-option label="arm64" :value="1" />
-                </el-select>
-              </div>
-            </el-form-item>
+              <el-form-item label="编译参数">
+                <el-checkbox-group v-model="form.flags">
+                  <el-checkbox value="-v">显示详细输出(-v)</el-checkbox>
+                  <el-checkbox value="-trimpath">清除路径信息(-trimpath)</el-checkbox>
+                </el-checkbox-group>
+              </el-form-item>
 
-            <el-form-item label="编译参数">
-              <el-checkbox-group v-model="form.flags">
-                <el-checkbox value="-v">显示详细输出(-v)</el-checkbox>
-                <el-checkbox value="-trimpath"
-                  >清除路径信息(-trimpath)</el-checkbox
-                >
-              </el-checkbox-group>
-            </el-form-item>
+              <el-row :gutter="20">
+                <el-col :span="12">
+                  <!-- 连接器标志 -->
+                  <el-form-item label="连接器标志">
+                    <el-input v-model="form.ldflags" placeholder="例如：-w -s" size="small" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="构建标签">
+                    <el-input v-model="form.tags" placeholder="多个逗号分隔（例如：jsoniter,debug）" size="small" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
 
-            <!-- 连接器标志 -->
-            <el-form-item label="连接器标志">
-              <el-input v-model="form.ldflags" placeholder="例如：-w -s" />
-            </el-form-item>
-
-            <el-form-item label="注入变量">
-              <div class="w-full">
-                <div class="flex flex-col gap-2 w-full">
-                  <div
-                    v-for="(item, index) in form.env_vars"
-                    :key="index"
-                    class="w-full flex justify-between gap-2"
-                  >
-                    <div class="w-4/5 gap-2 flex items-center">
-                      <el-input
-                        v-model="item.key"
-                        placeholder="变量名"
-                        class="w-4/5"
-                      />
-                      <el-button
-                        type="primary"
-                        plain
-                        icon="Edit"
-                        size="small"
-                        @click="
+              <el-form-item label="注入变量">
+                <div class="w-full border border-solid border-gray-200 p-2">
+                  <div class="h-[100px] flex flex-col gap-2 w-full overflow-y-scroll">
+                    <div v-for="(item, index) in form.env_vars" :key="index"
+                      class="w-full flex justify-between gap-2 items-center">
+                      <div class="w-4/5 gap-2 flex items-center">
+                        <el-input v-model="item.key" placeholder="变量名" class="w-4/5" size="small" />
+                        <el-button type="primary" plain icon="Edit" size="small" @click="
                           handleDblClick({
                             type: 'inject_env',
                             value: {
@@ -130,98 +144,31 @@
                             },
                             index: index,
                           })
-                        "
-                      ></el-button>
+                          "></el-button>
+                      </div>
+                      <el-button type="danger" @click="removeEnvVar(index)" icon="remove" size="small"></el-button>
                     </div>
-                    <el-button
-                      type="danger"
-                      @click="removeEnvVar(index)"
-                      icon="remove"
-                      size="small"
-                    ></el-button>
                   </div>
+                  <el-button type="primary" plain @click="addEnvVar" :class="form.env_vars.length > 0 ? 'mt-2' : ''"
+                    icon="Plus" size="small"></el-button>
                 </div>
-                <el-button
-                  type="primary"
-                  plain
-                  @click="addEnvVar"
-                  :class="form.env_vars.length > 0 ? 'mt-2' : ''"
-                  icon="Plus"
-                  size="small"
-                ></el-button>
-              </div>
-            </el-form-item>
-
-            <el-form-item label="构建标签">
-              <el-input
-                v-model="form.tags"
-                placeholder="多个标签用逗号分隔（例如：jsoniter,debug）"
-              />
-            </el-form-item>
-
-            <el-form-item label="编译后脚本">
-              <div class="w-full flex gap-2 items-center">
-                <el-tag
-                  closable
-                  v-for="(item, index) in form.after_scripts"
-                  :key="index"
-                  @close="
-                    handleTagClose({
-                      value: item,
-                      type: 'after',
-                      index: index,
-                    })
-                  "
-                  effect="plain"
-                  @dblclick="
-                    handleDblClick({
-                      value: item,
-                      type: 'after',
-                      index: index,
-                    })
-                  "
-                  >{{ item.name }}</el-tag
-                >
-                <el-input
-                  v-if="afterVisible"
-                  @keyup.enter="addScript('after')"
-                  v-model="afterInputValue"
-                  class="w-32"
-                ></el-input>
-                <el-button
-                  v-else
-                  type="primary"
-                  plain
-                  @click="
-                    afterVisible = true;
-                    afterInputValue = '';
-                  "
-                  icon="Plus"
-                  size="small"
-                ></el-button>
-              </div>
-            </el-form-item>
-
-            <el-form-item>
-              <el-button type="primary" @click="handleSubmit"
-                >保存编译信息</el-button
-              >
-              <el-button type="warning" icon="Promotion" @click="handleCompile"
-                >编译</el-button
-              >
-            </el-form-item>
-          </el-form>
+              </el-form-item>
+            </el-form>
+          </div>
+          <div class="shrink-0 p-4 flex justify-end gap-2 bg-gray-50 border-t border-gray-200">
+            <el-button type="primary" @click="handleSubmit">保存编译信息</el-button>
+            <el-button type="warning" icon="Promotion" @click="handleCompile">编译</el-button>
+          </div>
         </div>
-        <div class="p-5 w-3/5 h-full">
-          <div id="terminal" ref="terminal" class="h-full"></div>
+        <div class="w-1/2 flex flex-col h-full bg-black">
+          <div class="shrink-0 p-2 text-xs text-gray-400 border-b border-gray-700">
+            编译控制台
+          </div>
+          <div id="terminal" ref="terminal" class="flex-1 p-2"></div>
         </div>
       </div>
 
-      <ScriptDialog
-        v-model:visible="scriptDialog.visible"
-        :data="scriptDialog.data"
-        @close="dialogClose"
-      />
+      <ScriptDialog v-model:visible="scriptDialog.visible" :data="scriptDialog.data" @close="dialogClose" />
     </template>
   </base-page>
 </template>
@@ -231,7 +178,6 @@ import { ref, reactive, toRefs, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
-import { AttachAddon } from "xterm-addon-attach";
 import "xterm/css/xterm.css";
 import ScriptDialog from "./dialog.vue";
 import { useProjectStore } from "~/store/project";
@@ -317,7 +263,8 @@ const form = reactive({
   tags: "",
   before_scripts: [], // 编译前脚本
   after_scripts: [], // 编译后脚本
-  env_vars: [], // 初始化为空数组
+  os_env_vars: [], // 系统环境变量
+  env_vars: [], // 注入变量
 });
 
 const removeEnvVar = (index) => {
@@ -326,6 +273,14 @@ const removeEnvVar = (index) => {
 
 const addEnvVar = () => {
   form.env_vars.push({ key: "", value: "" });
+};
+
+const removeOsEnvVar = (index) => {
+  form.os_env_vars.splice(index, 1);
+};
+
+const addOsEnvVar = () => {
+  form.os_env_vars.push({ key: "", value: "" });
 };
 
 const addScript = (type) => {
@@ -425,12 +380,20 @@ const getConfig = async (id) => {
 
     form.output = res.output === "" ? outputScript.value : res.output;
     form.before_scripts = res.before_scripts ?? [];
-    form.after_scripts = res.after_scripts?? [];
+    form.after_scripts = res.after_scripts ?? [];
+    form.os_env_vars = res.os_env_vars ?? []; // 添加系统环境变量处理
     form.env_vars = res.env_vars ?? [];
     form.flags = res.flags ?? [];
     form.ldflags = res.ldflags ?? "-w -s";
   } catch (error) {
     console.log("error", error);
+  }
+};
+
+// 添加 resize 处理函数
+const handleResize = () => {
+  if (term.value && fitAddon) {
+    fitAddon.fit();
   }
 };
 
@@ -441,43 +404,56 @@ onMounted(() => {
   title.value = `项目编译 - [${project.value.name}]`;
 
   compile.project_id = id;
-  compile.version_id = version_id == 0 ? null : version_id;
+  compile.version_id = version_id == 0 ? null : parseInt(version_id);
   getConfig(id);
 
   // 初始化终端
   initTerm();
+
+  // 添加 resize 事件监听
+  window.addEventListener('resize', handleResize);
 });
 
-onUnmounted(() => {});
+onUnmounted(() => {
+  // 移除 resize 事件监听
+  window.removeEventListener('resize', handleResize);
+});
 
 const initTerm = () => {
   term.value = new Terminal({
-    rendererType: "canvas", //渲染类型
-    convertEol: true, //启用时，光标将设置为下一行的开头
-    scrollback: 50, //终端中的回滚量
-    disableStdin: true, //是否应禁用输入
-    windowsMode: true, // 根据窗口换行
-    cursorStyle: "underline", //光标样式
-    cursorBlink: true, //光标闪烁
-    fontFamily: "Monaco, Menlo, Consolas, 'Courier New', monospace", //字体
+    rendererType: "canvas",
+    convertEol: true,
+    scrollback: 1000, // 增加回滚量
+    disableStdin: true,
+    windowsMode: true,
+    cursorStyle: "underline",
+    cursorBlink: true,
+    fontFamily: "'Cascadia Code', Menlo, 'DejaVu Sans Mono', Consolas, 'Courier New', monospace", // 更新字体
+    fontSize: 13,
     lineHeight: 1.2,
-    fontSize: 12,
     theme: {
-      foreground: "#ECECEC", //字体
-      background: "#000000", //背景色
-      cursor: "help", //设置光标
-      lineHeight: 20,
+      foreground: "#A9B7C6",      // 更柔和的文字颜色
+      background: "#1E1E1E",      // VS Code 风格的背景色
+      cursor: "#A9B7C6",
+      selection: "#214283",       // 选中文本的背景色
+      black: "#000000",
+      red: "#FF6B68",
+      green: "#A8C023",
+      yellow: "#D6BF55",
+      blue: "#5394EC",
+      magenta: "#AE8ABE",
+      cyan: "#299999",
+      white: "#A9B7C6",
     },
   });
 
   term.value.open(terminal.value);
   term.value.loadAddon(fitAddon);
-  // 不能初始化的时候fit,需要等terminal准备就绪,可以设置延时操作
-  setTimeout(() => {
-    fitAddon.fit();
-  }, 5);
-
-  term.value.writeln("编译控制台");
+  fitAddon.fit();
+  
+  // 添加欢迎信息
+  term.value.writeln("\x1b[34m=== 编译控制台 ===\x1b[0m");
+  term.value.writeln("\x1b[90m等待编译任务...\x1b[0m");
 };
 
 const connWS = () => {
@@ -485,7 +461,7 @@ const connWS = () => {
   let url = `ws://${location.host}${route_path}?project_id=${compile.project_id}&id=${compile.version_id}`;
   console.log('url', url);
   try {
-    if (typeof(WebSocket) === "undefined") {
+    if (typeof (WebSocket) === "undefined") {
       console.log("您的浏览器不支持WebSocket");
       return;
     }
@@ -494,7 +470,7 @@ const connWS = () => {
       ws.value.close();
     }
     console.log('term.value', term.value);
-    
+
     term.value.clear();
 
     ws.value = new WebSocket(url);
@@ -507,7 +483,7 @@ const connWS = () => {
       term.value.writeln(date.toLocaleString() + ": " + e.data);
     }
   } catch (error) {
-    console.log("error", error);  
+    console.log("error", error);
   }
 };
 

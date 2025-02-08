@@ -174,6 +174,7 @@ const setValue = (value) => {
     formData.repo_url = value.repo_url;
     formData.repo_user = value.repo_user;
     formData.repo_password = value.repo_password;
+    formData.proxy_url = value.proxy_url;
     formData.remark = value.remark;
 };
 
