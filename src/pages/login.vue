@@ -1,54 +1,81 @@
 <template>
-  <div class="min-h-screen bg-primary-500 flex items-center justify-end">
-    <div class="w-[400px] mr-60" style="position: relative">
-      <el-image :src="SLImage" class="flower-img w-[300px] h-[500px]" />
-      <el-card class="w-[400px] h-[250px] p-8 bg-white shadow rounded-sm">
-        <h2 class="font-bold text-3xl text-gray-800 text-center mb-6">
+  <div class="min-h-screen bg-primary-500 flex items-center justify-center">
+    <div
+      class="w-full max-w-4xl mx-auto flex shadow-2xl rounded-lg overflow-hidden"
+    >
+      <!-- 左侧图片区域 -->
+      <div class="hidden lg:block lg:w-2/5 relative bg-primary-100">
+        <el-image
+          :src="SLImage"
+          class="w-full h-full object-cover"
+          fit="cover"
+        />
+        <div
+          class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/50 to-transparent text-white"
+        >
+          <h3 class="text-xl font-bold">Welcome Back</h3>
+          <p class="mt-1 text-xs">欢迎使用本系统</p>
+        </div>
+      </div>
+
+      <!-- 右侧登录表单区域 -->
+      <div class="w-full lg:w-3/5 bg-white p-6 lg:p-8">
+        <h2 class="font-bold text-2xl text-gray-800 text-center mb-6">
           欢迎回来
         </h2>
+
         <div
-          class="flex items-center justify-center my-5 text-gray-300 space-x-2"
+          class="flex items-center justify-center my-4 text-gray-400 space-x-2"
         >
-          <span class="h-[1px] w-16 bg-gray-200"></span>
-          <span>账号密码登录</span>
-          <span class="h-[1px] w-16 bg-gray-200"></span>
+          <span class="h-[1px] w-12 bg-gray-200"></span>
+          <span class="text-sm">账号密码登录</span>
+          <span class="h-[1px] w-12 bg-gray-200"></span>
         </div>
-        <el-form
-          ref="formRef"
-          :rules="rules"
-          :model="form"
-          class="flex flex-col items-center"
-        >
+
+        <el-form ref="formRef" :rules="rules" :model="form" class="space-y-4">
           <el-form-item prop="username" class="w-full">
-            <el-input v-model="form.username" placeholder="请输入用户名">
+            <el-input
+              v-model="form.username"
+              placeholder="请输入用户名"
+              size="default"
+              class="login-input"
+            >
               <template #prefix>
-                <el-icon><user /></el-icon>
+                <el-icon class="text-gray-400"><user /></el-icon>
               </template>
             </el-input>
           </el-form-item>
+
           <el-form-item prop="password" class="w-full">
             <el-input
               type="password"
               v-model="form.password"
               placeholder="请输入密码"
               show-password
+              size="large"
+              class="login-input"
             >
               <template #prefix>
-                <el-icon><lock /></el-icon>
+                <el-icon class="text-gray-400"><lock /></el-icon>
               </template>
             </el-input>
           </el-form-item>
-          <el-form-item>
-            <el-button
-              class="w-full"
-              type="primary"
-              @click="onSubmit"
-              :loading="loading"
-              >登 录</el-button
-            >
-          </el-form-item>
+
+          <div class="flex items-center justify-between">
+            <el-checkbox v-model="form.remember">记住密码</el-checkbox>
+            <el-link type="primary" class="text-sm">忘记密码？</el-link>
+          </div>
+
+          <el-button
+            type="primary"
+            class="w-full h-12 text-lg font-medium"
+            :loading="loading"
+            @click="onSubmit"
+          >
+            登录
+          </el-button>
         </el-form>
-      </el-card>
+      </div>
     </div>
   </div>
 </template>
@@ -66,6 +93,7 @@ const userStore = useUserStore();
 const form = reactive({
   username: "",
   password: "",
+  remember: false,
 });
 
 const rules = {
@@ -104,10 +132,24 @@ onBeforeUnmount(() => {
   document.removeEventListener("keyup", onKeyUp);
 });
 </script>
+
 <style scoped>
-.flower-img {
-  position: absolute;
-  left: -195px;
-  top: -120px;
+.login-input :deep(.el-input__wrapper) {
+  padding: 8px 15px;
+}
+
+.login-input :deep(.el-input__inner) {
+  height: 42px;
+}
+
+:deep(.el-button--primary) {
+  background: linear-gradient(to right, #4481eb, #04befe);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-button--primary:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1);
 }
 </style>
