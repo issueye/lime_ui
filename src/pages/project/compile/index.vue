@@ -28,7 +28,7 @@
               class="p-5"
             >
               <el-row :gutter="20">
-                <el-col :span="6"
+                <el-col :span="14"
                   ><el-form-item label="输出文件" prop="output">
                     <el-button
                       type="primary"
@@ -41,7 +41,7 @@
                     ></el-button> </el-form-item
                 ></el-col>
 
-                <el-col :span="18">
+                <el-col :span="10">
                   <el-form-item label="目标平台">
                     <div class="flex w-full gap-2">
                       <el-select
@@ -103,7 +103,6 @@
                   @edit="handleDblClick"
                 />
               </el-form-item>
-              <el-divider size="small" class="mx-1"></el-divider>
               <el-row :gutter="20">
                 <el-col :span="12">
                   <!-- 使用封装的 编译前脚本 组件 -->
@@ -124,7 +123,6 @@
                   />
                 </el-col>
               </el-row>
-              <el-divider size="small" class="mx-1"></el-divider>
               <OsEnvVars
                 :envVars="form.os_env_vars"
                 @update:envVars="form.os_env_vars = $event"

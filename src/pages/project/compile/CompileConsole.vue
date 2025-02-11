@@ -37,7 +37,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { Terminal } from "xterm";
-import FitAddon from "xterm-addon-fit";
+import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 
 const props = defineProps({
@@ -59,6 +59,7 @@ const ws = ref(null);
 const wsStatus = ref("disconnected");
 const heartbeatTimer = ref(null);
 const heartbeatInterval = 5000;
+const fitAddon = ref(null);
 
 // WebSocket相关方法
 const sendHeartbeat = () => {
@@ -80,8 +81,9 @@ const stopHeartbeat = () => {
 
 // 添加 resize 处理函数
 const handleResize = () => {
-  if (term.value && FitAddon) {
-    FitAddon.fit();
+  if (term.value && fitAddon.value) {
+    console.log("resize");
+    fitAddon.value.fit();
   }
 };
 
@@ -158,6 +160,8 @@ const initTerminal = () => {
   });
 
   if (terminal.value) {
+    fitAddon.value = new FitAddon();
+    term.value.loadAddon(fitAddon.value);
     term.value.open(terminal.value);
   }
 };

@@ -2,7 +2,7 @@
   <!--弹窗-->
   <el-dialog
     v-model="visible"
-    :title="dialog.title"
+    :title="computedTitle"
     width="800px"
     @close="handleClose"
     @open="handleOpen"
@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, toRefs, nextTick } from "vue";
+import { reactive, ref, toRefs, nextTick, computed } from "vue";
 
 import "codemirror/mode/javascript/javascript.js";
 import "codemirror/mode/shell/shell.js";
@@ -52,6 +52,16 @@ const props = defineProps({
 
 const { visible, data } = toRefs(props);
 const emits = defineEmits(["update:visible", "close"]);
+
+const computedTitle = computed(() => {
+  // 超过20个字符显示  value...value
+  if (data.value.name.length > 20) {
+    // return `编辑脚本 - [${data.value.name.substring(0, 10)}...${data.value.name.substring(0, 10)}]`;
+    return `编辑脚本 - [${data.value.name.substring(0, 10)}...${data.value.name.substring(data.value.name.length - 10)}]`;
+  }
+  
+  return `编辑脚本 - [${data.value.name}]`;
+})
 
 const dialog = reactive({
   title: "编辑脚本",
