@@ -58,7 +58,10 @@ const term = ref(null);
 const ws = ref(null);
 const wsStatus = ref("disconnected");
 const heartbeatTimer = ref(null);
-const heartbeatInterval = 5000;
+const heartbeatInterval = 30000; // 将心跳包间隔时间延长到30秒
+const reconnectDelay = 5000; // 添加重连延迟时间
+const maxReconnectAttempts = 5; // 最大重连次数
+const reconnectAttempts = ref(0);
 const fitAddon = ref(null);
 
 // WebSocket相关方法
@@ -79,11 +82,21 @@ const stopHeartbeat = () => {
   }
 };
 
-// 添加 resize 处理函数
+// 添加重连机制
+const reconnect = () => {
+  if (reconnectAttempts.value < maxReconnectAttempts) {
+    setTimeout(() => {
+      reconnectAttempts.value++;
+      connectWebSocket();
+    }, reconnectDelay);
+  }
+};
 const handleResize = () => {
   if (term.value && fitAddon.value) {
-    console.log("resize");
-    fitAddon.value.fit();
+    // 使用requestAnimationFrame优化resize性能
+    requestAnimationFrame(() => {
+      fitAddon.value.fit();
+    });
   }
 };
 
@@ -112,14 +125,15 @@ const connectWebSocket = () => {
     wsStatus.value = "disconnected";
     stopHeartbeat();
     emit("ws-status-change", "disconnected");
+    reconnect(); // 添加自动重连
   };
 
   ws.value.onerror = (error) => {
     wsStatus.value = "error";
     stopHeartbeat();
     emit("ws-status-change", "error");
+    reconnect(); // 添加自动重连
   };
-
   ws.value.onmessage = (e) => {
     if (term.value) {
       // 解析数据 {"type":1,"content":"{\"type\":\"heartbeat\"}","time":"2025-02-08T21:56:27.9070463+08:00"}
@@ -163,6 +177,10 @@ const initTerminal = () => {
     fitAddon.value = new FitAddon();
     term.value.loadAddon(fitAddon.value);
     term.value.open(terminal.value);
+    // 初始化时立即调整大小
+    setTimeout(() => {
+      fitAddon.value.fit();
+    }, 0);
   }
 };
 
@@ -179,7 +197,7 @@ onBeforeUnmount(() => {
     ws.value.close();
   }
   if (term.value) {
-    term.value.dispose();
+    // term.value.dispose();
   }
 
   // 移除 resize 事件监听

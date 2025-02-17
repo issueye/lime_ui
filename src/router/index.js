@@ -16,6 +16,7 @@ import Setting from '~/pages/system/setting/index.vue';
 
 import ProjectMana from '~/pages/project/mana/index.vue';
 import Compile from '~/pages/project/compile/index.vue';
+import FileDown from '~/pages/project/filedown/index.vue';
 
 
 // 默认路由，所有用户共享
@@ -33,6 +34,7 @@ const asyncRoutes = [
     // 代理管理
     { path: "/project/index", name: "project_mana", component: ProjectMana, meta: { title: "项目管理" } },
     { path: "/project/compile", name: "project_compile", component: Compile, meta: { title: "项目编译" } },
+    { path: "/project/filedown", name: "project_filedown", component: FileDown, meta: { title: "文件下载" } },
 
     // 系统管理
     { path: "/system/user", name: "user", component: User, meta: { title: "用户管理" } },
