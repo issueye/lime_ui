@@ -5,6 +5,7 @@
       :data="props.tableData"
       style="width: 100%"
       v-bind="$attrs"
+      border
     >
       <el-table-column
         v-for="column in props.columns"
