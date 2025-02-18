@@ -1,186 +1,158 @@
 <template>
-  <div class="flex flex-col h-full">
-    <div class="flex items-center justify-between p-4 border-b border-gray-200">
-      <div class="text-lg font-medium">文件下载管理</div>
-      <el-button type="primary" @click="openAddDialog">添加下载任务</el-button>
-    </div>
-
-    <div class="flex-1 p-4 overflow-auto">
-      <el-table :data="downloadList" border stripe style="width: 100%">
-        <el-table-column prop="name" label="任务名称" width="180" />
-        <el-table-column prop="url" label="下载地址" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)">{{
-              getStatusText(row.status)
-            }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="progress" label="进度" width="200">
-          <template #default="{ row }">
-            <el-progress
-              :percentage="row.progress"
-              :status="getProgressStatus(row.status)"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
-          <template #default="{ row }">
-            <el-button
-              v-if="row.status !== 'completed'"
-              type="primary"
-              link
-              @click="startDownload(row)"
-              >开始</el-button
-            >
-            <el-button
-              v-if="row.status === 'downloading'"
-              type="warning"
-              link
-              @click="pauseDownload(row)"
-              >暂停</el-button
-            >
-            <el-button type="danger" link @click="deleteDownload(row)"
-              >删除</el-button
-            >
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-
-    <!-- 添加下载任务对话框 -->
-    <el-dialog
-      v-model="dialogVisible"
-      title="添加下载任务"
-      width="500px"
-      destroy-on-close
-    >
-      <el-form
-        ref="formRef"
-        :model="formData"
-        :rules="rules"
-        label-width="100px"
-      >
-        <el-form-item label="任务名称" prop="name">
-          <el-input v-model="formData.name" placeholder="请输入任务名称" />
-        </el-form-item>
-        <el-form-item label="下载地址" prop="url">
-          <el-input v-model="formData.url" placeholder="请输入下载地址" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitForm">确定</el-button>
-        </span>
-      </template>
-    </el-dialog>
-  </div>
+  <base-page :title="title" desc="文件下载管理">
+    <template #content>
+      <div class="flex flex-col h-full">
+        <div class="search-bar">
+          <el-form ref="queryFormRef" :model="queryParams" :inline="true">
+            <el-form-item label="关键字" prop="keywords">
+              <el-input v-model="queryParams.keywords" placeholder="名称/编码" clearable @keyup.enter="handleQuery" />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" icon="search" @click="handleQuery">搜索</el-button>
+              <el-button icon="refresh" @click="handleResetQuery">重置</el-button>
+            </el-form-item>
+          </el-form>
+        </div>
+        <div class="grow">
+          <d-table :columns="columns" :table-data="tableData" :page-config="pageConfig" usePagination
+            highlight-current-row stripe :loading="loading" empty-text="暂无数据">
+            <template #created_at="{ scope }">
+              {{ parseTime(scope.row.created_at) }}
+            </template>
+            <template #operation="{ scope }">
+              <el-button type="primary" link @click="handleFiledownClick(scope.row)">下载</el-button>
+              <el-divider direction="vertical" />
+              <el-button type="danger" link @click="handleDeleteClick(scope.row)">删除</el-button>
+            </template>
+          </d-table>
+        </div>
+      </div>
+    </template>
+  </base-page>
 </template>
 
 <script setup>
-import { ref, reactive } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ref, reactive, onMounted } from "vue";
+import { apiGetList, apiDown, apiDel } from '~/api/project/filedown';
+import { ElMessageBox, ElMessage } from "element-plus";
 
 // 下载列表数据
-const downloadList = ref([]);
+const tableData = ref([]);
+const title = ref('文件管理');
+const loading = ref(false);
 
-// 对话框相关
-const dialogVisible = ref(false);
-const formRef = ref(null);
-const formData = reactive({
-  name: "",
-  url: "",
+/**
+ * 查询条件
+ */
+const queryParams = reactive({
+  keywords: "",
 });
 
-// 表单验证规则
-const rules = {
-  name: [{ required: true, message: "请输入任务名称", trigger: "blur" }],
-  url: [
-    { required: true, message: "请输入下载地址", trigger: "blur" },
-    { type: "url", message: "请输入有效的URL地址", trigger: "blur" },
-  ],
-};
+/**
+ * 分页查询
+ */
+const pageConfig = reactive({
+  pageSize: 10,
+  currentPage: 1,
+  total: 0,
+  handleCurrentChange: (val) => {
+    getData();
+  }
+});
 
-// 获取状态类型
-const getStatusType = (status) => {
-  const types = {
-    waiting: "info",
-    downloading: "primary",
-    paused: "warning",
-    completed: "success",
-    error: "danger",
-  };
-  return types[status] || "info";
-};
+const columns = [
+  { prop: "name", label: "文件名称", attrs: { minWidth: 150 } },
+  { prop: "version", label: "版本", attrs: { width: 250 } },
+  { prop: "hash", label: "HASH", attrs: { minWidth: 250, showOverflowTooltip: true } },
+  { prop: "size", label: "大小", attrs: { width: 150 } },
+  { prop: "download_num", label: "下载次数", attrs: { width: 150 } },
+  { prop: "created_at", label: "打包时间", slot: true, attrs: { width: 200, showOverflowTooltip: true } },
+  {
+    prop: "operation",
+    label: "操作",
+    slot: true,
+    attrs: { width: 120, fixed: "right" },
+  },
+]
 
-// 获取状态文本
-const getStatusText = (status) => {
-  const texts = {
-    waiting: "等待中",
-    downloading: "下载中",
-    paused: "已暂停",
-    completed: "已完成",
-    error: "错误",
-  };
-  return texts[status] || "未知";
-};
+/**
+ * 解析时间   例：2025-02-18T21:56:35.4802577+08:00
+ * @param {*} val 
+ */
+const parseTime = (val) => {
+  if (!val) return '';
+  const date = new Date(val);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 
-// 获取进度条状态
-const getProgressStatus = (status) => {
-  if (status === "completed") return "success";
-  if (status === "error") return "exception";
-  return "";
-};
+/**
+ * 获取数据
+ */
+const getData = async () => {
+  let params = {
+    pageNum: pageConfig.currentPage,
+    pageSize: pageConfig.pageSize,
+    condition: queryParams,
+  }
 
-// 打开添加对话框
-const openAddDialog = () => {
-  dialogVisible.value = true;
-};
+  let res = await apiGetList(params);
+  tableData.value = res.list;
+}
 
-// 提交表单
-const submitForm = async () => {
-  if (!formRef.value) return;
+const handleQuery = () => {
+  getData();
+}
 
-  await formRef.value.validate((valid) => {
-    if (valid) {
-      // TODO: 调用API添加下载任务
-      downloadList.value.push({
-        ...formData,
-        status: "waiting",
-        progress: 0,
-      });
-      dialogVisible.value = false;
-      ElMessage.success("添加成功");
-    }
-  });
-};
+/**
+ * 文件下载
+ * @param {*} val 
+ */
+const handleFiledownClick = (value) => {
+  apiDown(value.id).then((res) => {
+    const url = window.URL.createObjectURL(new Blob(res))
+    const link = document.createElement("a")
+    link.href = url
+    link.setAttribute("download", value.name);
+    document.body.appendChild(link)
+    link.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(link)
+  })
+}
 
-// 开始下载
-const startDownload = (row) => {
-  // TODO: 调用API开始下载
-  row.status = "downloading";
-};
-
-// 暂停下载
-const pauseDownload = (row) => {
-  // TODO: 调用API暂停下载
-  row.status = "paused";
-};
-
-// 删除下载
-const deleteDownload = (row) => {
-  ElMessageBox.confirm("确定要删除该下载任务吗？", "提示", {
+const handleDeleteClick = (value) => {
+  ElMessageBox.confirm("确认删除已选中的数据项?", "警告", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning",
-  }).then(() => {
-    // TODO: 调用API删除下载任务
-    const index = downloadList.value.indexOf(row);
-    if (index > -1) {
-      downloadList.value.splice(index, 1);
+  }).then(
+    async () => {
+      await apiDel(value.id);
+      toast("删除用户成功");
+      getData();
+    },
+    () => {
+      ElMessage.info("已取消删除");
     }
-    ElMessage.success("删除成功");
-  });
-};
+  );
+}
+
+/**
+ * 重置
+ */
+const handleResetQuery = () => {
+  queryParams.keywords = ""
+  getData();
+}
+
+onMounted(() => {
+  getData();
+})
+
 </script>
