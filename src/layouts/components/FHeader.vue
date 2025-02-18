@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex items-center bg-primary-500 text-light-50 fixed top-0 left-0 right-0"
+    class="flex items-center bg-primary-500 text-light-50 fixed top-0 left-0 right-0 z-[999]"
     :style="{ height: global.CARAMBOLA_HEADER_HEIGHT }"
   >
     <span
@@ -43,11 +43,16 @@
           <aim v-else />
         </el-icon>
       </el-tooltip>
-
-      <!-- 这段代码实现了一个用户信息下拉菜单：
-          显示用户头像和用户名。
-          点击后展示三个操作项：更换头像、修改密码和退出登录。
-          用户点击某一项时，会根据 command 值调用 handleCommand 方法来执行相应操作。 -->
+      <el-tooltip effect="dark" content="主题" placement="bottom">
+        <el-icon
+          class="w-[42px] flex justify-center items-center text-xl font-thin text-white hover:bg-primary-600 mr-12"
+          :style="{ height: global.CARAMBOLA_HEADER_HEIGHT }"
+          @click="openThemeColorPicker"
+        >
+          <brush />
+        </el-icon>
+      </el-tooltip>
+      <theme-color-picker ref="themeColorPickerRef" />
       <el-dropdown class="dropdown mr-[10px]" @command="handleCommand">
         <span class="flex items-center text-white text-light-50">
           <el-avatar class="mr-2" :size="25" :src="userStore.user.avatar" />
@@ -139,7 +144,7 @@ import { uploadAvatar, updateUserInfo } from "~/api/user"; // 新增的 API 函�
 import { global } from "~/init/global";
 import LogoImage from "~/assets/logo.ico";
 import FMenu from "./FMenu.vue";
-
+import ThemeColorPicker from "~/components/ThemeColorPicker.vue";
 const userStore = useUserStore();
 
 const { isFullscreen, toggle } = useFullscreen();
@@ -166,7 +171,10 @@ const handleCommand = (command) => {
 
 // 刷新页面
 const handleRefresh = () => location.reload();
-
+const themeColorPickerRef = ref(null);
+const openThemeColorPicker = () => {
+  themeColorPickerRef.value.open();
+};
 // 更换头像相关逻辑
 const avatarDrawerRef = ref(null);
 const avatarFormRef = ref(null);

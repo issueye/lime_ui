@@ -10,7 +10,7 @@
       :collapse-transition="false"
       text-color="#fff"
       active-text-color="#fff"
-      background-color="#83C0C1"
+      :background-color="themeColor"
     >
       <!-- 菜单 -->
       <!-- 遍历数组，:key 属性用于唯一标识数组中的每个元素，帮助 Vue 更高效地追踪和更新 DOM。 -->
@@ -56,10 +56,13 @@ import { computed, ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useUserStore } from "~/store"; // 导入 Pinia store
 import { global } from "~/init/global";
+import { storeToRefs } from 'pinia';
 
 const router = useRouter();
 const route = useRoute();
 const userStore = useUserStore(); // 使用 Pinia store
+
+const { themeColor } = storeToRefs(userStore); // 解构出 userStore 中的 state 和 actions
 
 // 默认选中
 const defaultActive = ref(route.path);

@@ -17,7 +17,8 @@ export const useUserStore = defineStore(
         const menus = ref([])
         // 侧边菜单
         const asideMenus = ref([])
-
+        // themeColor
+        const themeColor = ref('')
         // 规则名称
         const ruleNames = ref([])
 
@@ -112,13 +113,14 @@ export const useUserStore = defineStore(
             menus,
             asideMenus,
             ruleNames,
+            themeColor,
             setUserInfo,
             handleAsideWidth,
             setMenus,
             setRuleNames,
             loginUser,
             fetchUserInfo,
-            logoutUser
+            logoutUser,
         }
     },
     {
