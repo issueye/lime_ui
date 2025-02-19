@@ -47,6 +47,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  size: {
+    type: String,
+    default: "small",
+  },
 });
 const emit = defineEmits(["update:injectVars", "edit"]);
 

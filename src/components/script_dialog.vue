@@ -4,7 +4,7 @@
     v-model="visible"
     :title="computedTitle"
     width="800px"
-    @close="handleClose"
+    @close="handleClose('cancel')"
     @open="handleOpen"
     :close-on-click-modal="false"
   >
@@ -18,7 +18,7 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button type="primary" @click="handleSubmitClick">确 定</el-button>
-        <el-button @click="handleClose">取 消</el-button>
+        <el-button @click="handleClose('cancel')">取 消</el-button>
       </div>
     </template>
   </el-dialog>
@@ -66,6 +66,7 @@ const computedTitle = computed(() => {
 const dialog = reactive({
   title: "编辑脚本",
   loading: false,
+  closeType: "cancel", // cancel 取消 ok 确定
 });
 
 const cmRef = ref();
@@ -88,13 +89,14 @@ onUnmounted(() => {
 /**
  * 关闭弹窗
  */
-const handleClose = () => {
-  emits("update:visible", false);
-  emits("close", data.value.content);
+const handleClose = (closeType) => {
+  if (visible.value) {
+    emits("close", data.value.content, closeType);
+    emits("update:visible", false);
+  }
 };
 
 const handleOpen = () => {
-  console.log("handleOpen", data.value);
   dialog.title = `编辑脚本 - [${data.value.name}]`;
   cmOptions.mode = data.value.type;
   cmRef.value?.refresh();
@@ -108,7 +110,7 @@ const handleSubmitClick = () => {
 
   setTimeout(() => {
     dialog.loading = false;
-    handleClose();
+    handleClose("ok");
   }, 500);
 };
 </script>

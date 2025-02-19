@@ -1,19 +1,42 @@
 <template>
-  <div class="w-full flex items-center mb-2" @click="handleCellClick">
-    <div class="h-12 w-1 bg-header-500 text-header-500" v-if="isShowActive">
-      .
-    </div>
-    <div :class="cellClass">
-      <div class="ml-2">
-        <span class="text-gray-400 text-xs mr-2">{{ data.code }}</span>
-        <span class="font-medium text-sm">{{ data.name }}</span>
+  <div
+    class="w-full flex items-center mb-3 transform transition-all duration-300 ease-in-out hover:translate-x-1"
+    @click="handleCellClick"
+  >
+    <div
+      class="h-12 w-1 rounded-l transition-all duration-300"
+      :class="{ 
+        'bg-primary-500 opacity-100': isShowActive, 
+        'bg-transparent opacity-0': !isShowActive 
+      }"
+    ></div>
+    <div
+      class="w-full flex border border-solid border-gray-100 justify-between px-4 h-12 items-center rounded-r-lg transition-all duration-300"
+      :class="{
+        'bg-primary-50 shadow-md': isShowActive,
+        'hover:bg-gray-50 shadow-sm': !isShowActive
+      }"
+    > 
+      <div class="flex items-center space-x-3">
+        <el-tag size="small" effect="plain" class="min-w-[80px] text-center">{{ data.code }}</el-tag>
+        <span class="font-medium text-gray-700">{{ data.name }}</span>
       </div>
-      <div class="flex items-center mr-2">
-        <el-button link @click="handleEditClick" type="primary">修改</el-button>
-        <el-divider direction="vertical" />
-        <el-button type="danger" link @click="handleDeleteClick"
-          >删除</el-button
-        >
+      <div class="flex items-center space-x-2">
+        <el-button
+          class="!px-3"
+          :icon="Edit"
+          link
+          @click="handleEditClick"
+          type="primary"
+        >修改</el-button>
+        <el-divider direction="vertical" class="!mx-1" />
+        <el-button
+          class="!px-3"
+          :icon="Delete"
+          type="danger"
+          link
+          @click="handleDeleteClick"
+        >删除</el-button>
       </div>
     </div>
   </div>
@@ -23,6 +46,7 @@
 import { computed, toRefs } from "vue";
 import { useDictStore } from "~/store/dict";
 import { storeToRefs } from "pinia";
+import { Edit, Delete } from '@element-plus/icons-vue';
 
 const props = defineProps({
   data: {
@@ -32,6 +56,7 @@ const props = defineProps({
         id: 0, // ID
         code: "", // 编码
         name: "", // 名称
+        content_type: 2, // 内容类型 1:Json 2:Text 3:Anko Script
         remark: "", // 备注
       };
     },
@@ -45,19 +70,8 @@ const emits = defineEmits(["edit", "delete", "cell"]);
 
 const { data } = toRefs(props);
 
-const cellClass = computed(() => {
-  if (!activeData.value) {
-    return "w-full flex justify-between px-2 h-12 items-center hover:shadow-md border border-slate-100 border-solid";
-  }
-
-  return data.value.id === activeData.value.id
-    ? "w-full flex justify-between px-2 h-12 items-center hover:shadow shadow-md bg-slate-100"
-    : "w-full flex justify-between px-2 h-12 items-center hover:shadow-md border border-slate-100 border-solid";
-});
-
 const isShowActive = computed(() => {
   if (!activeData.value) return false;
-
   return data.value.id === activeData.value.id;
 });
 

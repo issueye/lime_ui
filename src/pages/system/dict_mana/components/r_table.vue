@@ -4,26 +4,14 @@
       <el-input class="w-52" placeholder="检索内容" :suffix-icon="Search" />
     </div>
     <div class="mt-3">
-      <el-button type="success" icon="plus" @click="handleAddClick"
-        >添加</el-button
-      >
+      <el-button type="success" icon="plus" @click="handleAddClick">添加</el-button>
     </div>
   </div>
   <div class="mt-3">
-    <d-table
-      :columns="columns"
-      :table-data="dictDetailData"
-      :page-config="pageConfig"
-      usePagination
-      highlight-current-row
-      stripe
-      :loading="loading"
-      empty-text="暂无数据"
-    >
+    <d-table :columns="columns" :table-data="dictDetailData" :page-config="pageConfig" usePagination
+      highlight-current-row stripe :loading="loading" empty-text="暂无数据">
       <template #operation="{ scope }">
-        <el-button type="primary" link @click="handleEditClick(scope.row)"
-          >编辑</el-button
-        >
+        <el-button type="primary" link @click="handleEditClick(scope.row)">编辑</el-button>
         <el-divider direction="vertical" />
         <el-dropdown @command="handleCommand">
           <span class="flex items-center text-[--el-color-primary]">
@@ -31,23 +19,21 @@
           </span>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item
-                :command="{ data: scope.row, type: 'del' }"
-                class="text-[--el-color-danger]"
-                >删除</el-dropdown-item
-              >
+              <el-dropdown-item :command="{ data: scope.row, type: 'edit_content' }" class="text-[--el-color-danger]"
+                v-if="activeData.content_type == 3">
+                编辑内容
+              </el-dropdown-item>
+              <el-dropdown-item :command="{ data: scope.row, type: 'del' }"
+                class="text-[--el-color-danger]">删除</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
       </template>
     </d-table>
   </div>
-  <Dialog
-    v-model:visible="dialog.visible"
-    v-model:form-data="formData"
-    :operation-type="dialog.operationType"
-    @close="handleDialogClose"
-  />
+  <Dialog v-model:visible="dialog.visible" v-model:form-data="formData" :operation-type="dialog.operationType"
+    @close="handleDialogClose" />
+  <ScriptDialog v-model:visible="scriptDialog.visible" :data="scriptDialog.data" @close="scriptDialog.closeFn" />
 </template>
 <script setup>
 import { ref, reactive } from "vue";
@@ -57,13 +43,15 @@ import Dialog from "./detail_dialog.vue";
 import { useDictStore } from "~/store/dict";
 import { storeToRefs } from "pinia";
 import { apiDeleteDetail } from "~/api/dict";
+import ScriptDialog from "~/components/script_dialog.vue";
+import { apiSaveDetail } from "~/api/dict";
 
 const dictStore = useDictStore();
 const { activeData, dictDetailData, pageConfig } = storeToRefs(dictStore);
 
 const columns = [
   { prop: "key", label: "名称", attrs: { width: 230 } },
-  { prop: "val", label: "值", attrs: { width: 230 } },
+  { prop: "val", label: "值", attrs: { minWidth: 230, showOverflowTooltip: true } },
   { prop: "remark", label: "备注", attrs: { minWidth: 200 } },
   {
     prop: "operation",
@@ -87,6 +75,23 @@ const formData = reactive({
   val: "", // 名称
   remark: "", // 备注
 });
+
+const scriptDialog = reactive({
+  visible: false,
+  data: {
+    name: "",
+    title: "",
+    content: "",
+  },
+  closeFn: async (value, closeType) => {
+    if (closeType === 'cancel') {
+      return;
+    }
+    formData.val = value;
+    await apiSaveDetail(formData);
+    toast("保存成功");
+  }
+})
 
 const setData = (value) => {
   formData.id = value.id;
@@ -122,6 +127,13 @@ const handleCommand = (value) => {
       delData(value.data);
       break;
     }
+    case "edit_content": {
+      scriptDialog.data.title = "编辑内容";
+      scriptDialog.data.name = value.data.key;
+      scriptDialog.data.content = value.data.val;
+      scriptDialog.visible = true;
+      break;
+    }
   }
 };
 
@@ -141,7 +153,7 @@ const delData = (value) => {
         ElMessage.info("已取消删除");
       }
     )
-    .finally(() => {});
+    .finally(() => { });
 };
 
 const handleDialogClose = () => {

@@ -1,32 +1,16 @@
 <template>
   <!--弹窗-->
-  <el-dialog
-    v-model="visible"
-    :title="dialog.title"
-    width="500px"
-    @close="handleClose"
-    @open="handleOpen"
-    :close-on-click-modal="false"
-  >
-    <el-form
-      ref="dataFormRef"
-      :model="formData"
-      :rules="computedRules"
-      label-width="auto"
-    >
+  <el-dialog v-model="visible" :title="dialog.title" width="700px" @close="handleClose" @open="handleOpen"
+    :close-on-click-modal="false">
+    <el-form ref="dataFormRef" :model="formData" :rules="computedRules" label-width="auto">
       <el-form-item label="名称" prop="key">
         <el-input v-model="formData.key" placeholder="请输入名称" />
       </el-form-item>
       <el-form-item label="值" prop="val">
-        <el-input v-model="formData.val" placeholder="请输入值" />
+        <el-input v-model="formData.val" placeholder="请输入值" type="textarea" :rows="6" />
       </el-form-item>
       <el-form-item label="备注">
-        <el-input
-          v-model="formData.remark"
-          placeholder="请输入备注"
-          type="textarea"
-          :rows="4"
-        />
+        <el-input v-model="formData.remark" placeholder="请输入备注" type="textarea" :rows="2" />
       </el-form-item>
     </el-form>
 
@@ -38,8 +22,8 @@
     </template>
   </el-dialog>
 </template>
-  
-  <script setup>
+
+<script setup>
 import { apiSaveDetail } from "~/api/dict";
 import { reactive, ref, toRefs, computed } from "vue";
 import { useDictStore } from "~/store/dict";
@@ -91,7 +75,6 @@ const dialog = reactive({
 const computedRules = computed(() => {
   const rules = {
     key: [{ required: true, message: "请输入编码", trigger: "blur" }],
-    val: [{ required: true, message: "请输入名称", trigger: "blur" }],
   };
   return rules;
 });

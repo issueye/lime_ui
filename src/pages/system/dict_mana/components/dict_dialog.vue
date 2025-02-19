@@ -20,6 +20,13 @@
       <el-form-item label="名称" prop="name">
         <el-input v-model="formData.name" placeholder="请输入名称" />
       </el-form-item>
+      <el-form-item label="内容类型" prop="content_type">
+        <el-radio-group v-model="formData.content_type" :disabled="operationType != 0">
+          <el-radio-button :value="2" label="Text" />
+          <el-radio-button :value="1" label="Json" />
+          <el-radio-button :value="3" label="Anko Script" />
+        </el-radio-group>
+      </el-form-item>
       <el-form-item label="备注">
         <el-input
           v-model="formData.remark"
@@ -62,6 +69,7 @@ const props = defineProps({
         id: 0, // ID
         code: "", // 编码
         name: "", // 名称
+        content_type: 2, // 内容类型 1:Json 2:Text 3:Anko Script
         remark: "", // 备注
       };
     },
@@ -98,6 +106,8 @@ const handleClose = () => {
 };
 
 const handleOpen = () => {
+  console.log('formData.value', formData.value);
+  
   switch (operationType.value) {
     case 0:
       dialog.title = "新增字典信息";

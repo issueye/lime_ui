@@ -6,7 +6,7 @@
         v-for="(item, index) in scripts"
         :key="index"
         closable
-        size="small"
+        :size="props.size"
         effect="plain"
         @close="removeScript(index)"
         @dblclick="onEdit(item, index)"
@@ -16,7 +16,7 @@
       <el-input
         v-if="visible"
         v-model="inputValue"
-        size="small"
+        :size="props.size"
         class="w-32"
         @keyup.enter="addScript"
       ></el-input>
@@ -47,6 +47,10 @@ const props = defineProps({
     type: String,
     default: "",
   },
+  size: {
+    type: String,
+    default: "small",
+  }
 });
 const emit = defineEmits(["update:scripts", "edit"]);
 const visible = ref(false);

@@ -29,6 +29,11 @@ service.interceptors.request.use(
 // 添加响应拦截器
 service.interceptors.response.use(
     function (response) {
+        // 判断URL 如果是下载文件 则直接返回
+        if (response.config.responseType == "blob") {
+            return response
+        }
+
         // 对响应数据做点什么
         const code = response.data.code;
         if (code != 200) {

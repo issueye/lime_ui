@@ -35,6 +35,7 @@
 import { ref, reactive, onMounted } from "vue";
 import { apiGetList, apiDown, apiDel } from '~/api/project/filedown';
 import { ElMessageBox, ElMessage } from "element-plus";
+import { toast } from "~/composables/util";
 
 // 下载列表数据
 const tableData = ref([]);
@@ -63,7 +64,7 @@ const pageConfig = reactive({
 const columns = [
   { prop: "name", label: "文件名称", attrs: { minWidth: 150 } },
   { prop: "version", label: "版本", attrs: { width: 250 } },
-  { prop: "hash", label: "HASH", attrs: { minWidth: 250, showOverflowTooltip: true } },
+  { prop: "hash", label: "文件HASH", attrs: { minWidth: 250, showOverflowTooltip: true } },
   { prop: "size", label: "大小", attrs: { width: 150 } },
   { prop: "download_num", label: "下载次数", attrs: { width: 150 } },
   { prop: "created_at", label: "打包时间", slot: true, attrs: { width: 200, showOverflowTooltip: true } },
@@ -103,6 +104,7 @@ const getData = async () => {
 
   let res = await apiGetList(params);
   tableData.value = res.list;
+  pageConfig.total = res.total;
 }
 
 const handleQuery = () => {
@@ -115,14 +117,12 @@ const handleQuery = () => {
  */
 const handleFiledownClick = (value) => {
   apiDown(value.id).then((res) => {
-    const url = window.URL.createObjectURL(new Blob(res))
-    const link = document.createElement("a")
-    link.href = url
-    link.setAttribute("download", value.name);
-    document.body.appendChild(link)
-    link.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(link)
+    let objectUrl = window.URL.createObjectURL(new Blob([res.data]));
+    let a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = value.name; // 设置下载文件的名字
+    a.click();
+    a.remove();
   })
 }
 
@@ -134,7 +134,7 @@ const handleDeleteClick = (value) => {
   }).then(
     async () => {
       await apiDel(value.id);
-      toast("删除用户成功");
+      toast("删除文件成功");
       getData();
     },
     () => {

@@ -28,7 +28,30 @@
               class="p-5"
             >
               <el-row :gutter="20">
-                <el-col :span="14"
+                <el-col :span="12">
+                  <el-form-item label="目标平台">
+                    <div class="flex w-full gap-2">
+                      <el-select
+                        v-model="form.goos"
+                        placeholder="选择操作系统"
+                        :size="size"
+                      >
+                        <el-option label="Windows" :value="0" />
+                        <el-option label="Linux" :value="1" />
+                        <el-option label="macOS" :value="2" />
+                      </el-select>
+                      <el-select
+                        v-model="form.goarch"
+                        placeholder="选择架构"
+                        :size="size"
+                      >
+                        <el-option label="amd64" :value="0" />
+                        <el-option label="arm64" :value="1" />
+                      </el-select>
+                    </div>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12"
                   ><el-form-item label="输出文件" prop="output">
                     <el-button
                       type="primary"
@@ -40,30 +63,6 @@
                       "
                     ></el-button> </el-form-item
                 ></el-col>
-
-                <el-col :span="10">
-                  <el-form-item label="目标平台">
-                    <div class="flex w-full gap-2">
-                      <el-select
-                        v-model="form.goos"
-                        placeholder="选择操作系统"
-                        size="small"
-                      >
-                        <el-option label="Windows" :value="0" />
-                        <el-option label="Linux" :value="1" />
-                        <el-option label="macOS" :value="2" />
-                      </el-select>
-                      <el-select
-                        v-model="form.goarch"
-                        placeholder="选择架构"
-                        size="small"
-                      >
-                        <el-option label="amd64" :value="0" />
-                        <el-option label="arm64" :value="1" />
-                      </el-select>
-                    </div>
-                  </el-form-item>
-                </el-col>
               </el-row>
 
               <el-form-item label="编译参数">
@@ -75,6 +74,14 @@
                 </el-checkbox-group>
               </el-form-item>
 
+              <el-form-item label="入口">
+                <el-input
+                  v-model="form.main_path"
+                  placeholder="例如：cmd/main.go"
+                  :size="size"
+                />
+              </el-form-item>
+
               <el-row :gutter="20">
                 <el-col :span="12">
                   <!-- 连接器标志 -->
@@ -82,7 +89,7 @@
                     <el-input
                       v-model="form.ldflags"
                       placeholder="例如：-w -s"
-                      size="small"
+                      :size="size"
                     />
                   </el-form-item>
                 </el-col>
@@ -91,7 +98,7 @@
                     <el-input
                       v-model="form.tags"
                       placeholder="多个逗号分隔（例如：jsoniter,debug）"
-                      size="small"
+                      :size="size"
                     />
                   </el-form-item>
                 </el-col>
@@ -110,6 +117,7 @@
                     v-model:scripts="form.before_scripts"
                     type="before"
                     label="编译前脚本"
+                    :size="size"
                     @edit="handleDblClick"
                   />
                 </el-col>
@@ -119,6 +127,7 @@
                     v-model:scripts="form.after_scripts"
                     type="after"
                     label="编译后脚本"
+                    :size="size"
                     @edit="handleDblClick"
                   />
                 </el-col>
@@ -161,7 +170,7 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-import ScriptDialog from "./dialog.vue";
+import ScriptDialog from "~/components/script_dialog.vue";
 import { useProjectStore } from "~/store/project";
 import { storeToRefs } from "pinia";
 import {
@@ -184,6 +193,7 @@ const compile = reactive({
 });
 
 const title = ref("项目编译");
+const size = ref('');
 
 const scriptDialog = reactive({
   visible: false,
@@ -239,6 +249,7 @@ const form = reactive({
   flags: [],
   ldflags: "-w -s",
   tags: "",
+  main_path: "main.go",
   before_scripts: [], // 编译前脚本
   after_scripts: [], // 编译后脚本
   os_env_vars: [], // 系统环境变量
@@ -304,6 +315,7 @@ const getConfig = async (id) => {
     form.os_env_vars = res.os_env_vars ?? []; // 添加系统环境变量处理
     form.env_vars = res.env_vars ?? [];
     form.flags = res.flags ?? [];
+    form.main_path = res.main_path;
     form.ldflags = res.ldflags ?? "-w -s";
   } catch (error) {
     console.log("error", error);

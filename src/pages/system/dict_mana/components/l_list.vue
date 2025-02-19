@@ -59,6 +59,7 @@ const formData = reactive({
   id: 0,
   code: "",
   name: "",
+  content_type: 2,
   remark: "",
 });
 
@@ -66,6 +67,7 @@ const reset = () => {
   formData.id = 0;
   formData.code = "";
   formData.name = "";
+  formData.content_type = 2; // 内容类型 1:Json 2:Text 3:Anko Script
   formData.remark = "";
 };
 
@@ -73,6 +75,7 @@ const setData = (value) => {
   formData.id = value.id;
   formData.code = value.code;
   formData.name = value.name;
+  formData.content_type = value.content_type;
   formData.remark = value.remark;
 };
 
@@ -98,7 +101,9 @@ const handleAddClick = () => {
 
 const handleEditClick = (value) => {
   dialog.operationType = 1;
+  console.log('edit data', value);
   setData(value);
+  console.log('formData -> index', formData);
   dialog.visible = true;
 };
 

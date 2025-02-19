@@ -17,7 +17,7 @@ export function apiGetList(data) {
 export function apiDown(id) {
     return axios({
         url: `/api/v1/project/package/download/${id}`,
-        method: 'post',
+        method: 'get',
         responseType: 'blob'
     })
 }

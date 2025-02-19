@@ -164,7 +164,6 @@ const handleEditClick = (value) => {
 };
 
 const handleRowClick = (row) => {
-    console.log('row', row);
     projectStore.setProject(row);
 }
 
